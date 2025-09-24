@@ -4,7 +4,7 @@
 
 resource "aws_dynamodb_table" "orders_table" {
   # Table name as specified in the plan
-  name         = "Orders"
+  name         = "Momotaro-Dashboard-Orders"
   billing_mode = "PAY_PER_REQUEST"
 
   # Define the primary key for the table
