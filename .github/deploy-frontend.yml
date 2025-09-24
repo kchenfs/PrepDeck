@@ -30,7 +30,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           # IMPORTANT: Change this to the AWS region where your S3 bucket is located.
-          aws-region: us-east-1
+          aws-region: ca-central-1
 
       # Step 3: Set up Node.js environment
       # This action installs Node.js so that we can run npm commands.
