@@ -1,0 +1,63 @@
+# .github/workflows/deploy-frontend.yml
+
+# Name of the workflow, which will be displayed in the "Actions" tab of your GitHub repository.
+name: Deploy Frontend to AWS S3 and CloudFront
+
+# This workflow runs on any push to the 'main' branch.
+# You can change 'main' to your default branch name if it's different (e.g., 'master').
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    # Use the latest available version of Ubuntu as the runner for this job.
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code
+      # This action downloads a copy of your repository onto the runner.
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Configure AWS credentials
+      # This action securely configures the AWS CLI with credentials you'll store in GitHub Secrets.
+      # It's the standard and secure way to grant your workflow access to your AWS account.
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # IMPORTANT: Change this to the AWS region where your S3 bucket is located.
+          aws-region: us-east-1
+
+      # Step 3: Set up Node.js environment
+      # This action installs Node.js so that we can run npm commands.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Using a current Long-Term Support (LTS) version of Node.js.
+          cache: 'npm' # This will cache your dependencies to speed up future builds.
+
+      # Step 4: Install project dependencies
+      # This runs the same 'npm install' command you use on your local machine.
+      - name: Install dependencies
+        run: npm install
+
+      # Step 5: Build the React application for production
+      # This runs the 'npm run build' script from your package.json, creating the 'dist' folder.
+      - name: Build React application
+        run: npm run build
+
+      # Step 6: Deploy the build files from the 'dist' folder to your S3 bucket
+      # The 'aws s3 sync' command is highly efficient. It only uploads files that have changed.
+      # The '--delete' flag removes any files from the bucket that are no longer in the 'dist' folder.
+      - name: Deploy to S3
+        run: |
+          aws s3 sync ./dist s3://${{ secrets.S3_BUCKET_NAME }} --delete
+
+      # Step 7: Invalidate the CloudFront cache to serve the new version of the site
+      # This command tells CloudFront to clear its cache globally, ensuring that users
+      # will see your latest changes immediately instead of a cached older version.
+ 
