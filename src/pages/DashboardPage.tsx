@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.tsx
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react'; // FIX: Removed unused React and useEffect
 import { KanbanColumn } from '../components/dashboard/KanbanColumn';
-import { Order } from '../types';
+import type { Order } from '../types'; // FIX: Changed to 'import type'
 import { Inbox, ChefHat, LayoutDashboard, History } from 'lucide-react';
 
 // Mock data for demonstration

@@ -1,7 +1,6 @@
 // src/components/dashboard/KanbanColumn.tsx
-import React from 'react';
 import { OrderCard } from './OrderCard';
-import { Order } from '../../types';
+import type { Order } from '../../types'; // FIX: Changed to 'import type'
 
 interface KanbanColumnProps {
   title: string;

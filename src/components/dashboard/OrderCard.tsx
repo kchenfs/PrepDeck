@@ -1,6 +1,5 @@
 // src/components/dashboard/OrderCard.tsx
-import React from 'react';
-import { Order } from '../../types';
+import type { Order } from '../../types'; // FIX: Changed to 'import type'
 import { PlayCircle, CheckCheck, Siren } from 'lucide-react';
 
 interface OrderCardProps {
