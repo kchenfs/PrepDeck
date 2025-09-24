@@ -1,8 +1,9 @@
 // src/pages/DashboardPage.tsx
-import { useState } from 'react'; // FIX: Removed unused React and useEffect
+import React, { useState, useEffect } from 'react';
 import { KanbanColumn } from '../components/dashboard/KanbanColumn';
-import type { Order } from '../types'; // FIX: Changed to 'import type'
+import { Order } from '../types';
 import { Inbox, ChefHat, LayoutDashboard, History } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Mock data for demonstration
 const initialOrders: Order[] = [
@@ -36,10 +37,10 @@ export function DashboardPage() {
             <h1 className="text-3xl font-bold text-white">BOH Dashboard</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-             <button className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+             <Link to="/history" className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
                 <History className="w-5 h-5" />
                 Order History
-            </button>
+            </Link>
         </div>
       </header>
 
