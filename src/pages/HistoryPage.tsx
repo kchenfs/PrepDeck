@@ -1,5 +1,4 @@
 // src/pages/HistoryPage.tsx
-import React from 'react';
 import { Link } from 'react-router-dom';
 import { History, LayoutDashboard } from 'lucide-react';
 

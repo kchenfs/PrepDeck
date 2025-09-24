@@ -1,7 +1,7 @@
 // src/pages/DashboardPage.tsx
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { KanbanColumn } from '../components/dashboard/KanbanColumn';
-import { Order } from '../types';
+import type { Order } from '../types'; // FIX: 'type' added for verbatimModuleSyntax
 import { Inbox, ChefHat, LayoutDashboard, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -14,9 +14,6 @@ const initialOrders: Order[] = [
 export function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>(initialOrders);
 
-  // In a real app, you'd use AppSync to get new orders here.
-  // We'll add simulation buttons for now.
-  
   const handleStartPreparing = (id: number) => {
     setOrders(prevOrders => prevOrders.map(o => o.id === id ? { ...o, state: 'preparing' } : o));
   };
