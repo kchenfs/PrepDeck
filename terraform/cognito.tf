@@ -22,6 +22,24 @@ resource "aws_cognito_user_pool" "user_pool" {
     attribute_data_type = "String"
     required            = true
     mutable             = true
+    string_attribute_constraints {
+        min_length = 1
+        max_length = 2048
+    }
+  }
+
+  # 👇 THIS IS THE CORRECTED BLOCK FOR YOUR CUSTOM ATTRIBUTE 👇
+  schema {
+   # The name MUST start with "custom:" to mark it as a custom attribute.
+    name                = "custom:restaurantId"
+    attribute_data_type = "String"
+    mutable             = true
+    
+    # This block is required for string attributes
+    string_attribute_constraints {
+      min_length = 1      # The ID cannot be empty
+      max_length = 256    # Allows for a generous ID length
+    }
   }
 
   # Do not automatically send a welcome email to new users

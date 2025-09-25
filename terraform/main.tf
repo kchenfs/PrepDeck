@@ -10,6 +10,24 @@ terraform {
       version = "6.14.1" # Specifies a compatible version of the AWS provider
     }
   }
+
+  # 👇 ADD THIS BLOCK TO CONFIGURE REMOTE STATE 👇
+  backend "s3" {
+    # The name of the S3 bucket you created to store the state file.
+    bucket = "momotaro-terraform-state-f8x2y7"
+
+    # The path and filename for the state file inside the S3 bucket.
+    key = "global/terraform.tfstate"
+
+    # The AWS region where your S3 bucket and DynamoDB table are located.
+    region = "ca-central-1"
+
+    # The name of the DynamoDB table used for state locking.
+    dynamodb_table = "momotaro-terraform-lock"
+    
+    # Encrypts the state file at rest in S3.
+    encrypt = true
+  }
 }
 
 # This block configures the AWS provider itself.
