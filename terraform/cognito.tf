@@ -7,7 +7,6 @@
 resource "aws_cognito_user_pool" "user_pool" {
   name = "momotaro-user-pool"
 
-  # Configure password policies
   password_policy {
     minimum_length    = 8
     require_lowercase = true
@@ -16,7 +15,6 @@ resource "aws_cognito_user_pool" "user_pool" {
     require_uppercase = true
   }
 
-  # Configure users to sign in with their email address
   schema {
     name                = "email"
     attribute_data_type = "String"
@@ -28,21 +26,16 @@ resource "aws_cognito_user_pool" "user_pool" {
     }
   }
 
-  # 👇 THIS IS THE CORRECTED BLOCK FOR YOUR CUSTOM ATTRIBUTE 👇
   schema {
-   # The name MUST start with "custom:" to mark it as a custom attribute.
-    name                = "custom:restaurantId"
+    name                = "restaurantId"
     attribute_data_type = "String"
     mutable             = true
-    
-    # This block is required for string attributes
     string_attribute_constraints {
-      min_length = 1      # The ID cannot be empty
-      max_length = 256    # Allows for a generous ID length
+      min_length = 1
+      max_length = 256
     }
   }
 
-  # Do not automatically send a welcome email to new users
   auto_verified_attributes = ["email"]
 
   tags = {
@@ -54,40 +47,55 @@ resource "aws_cognito_user_pool" "user_pool" {
 # ------------------------------------------------------------------------------
 # COGNITO IDENTITY PROVIDER (e.g., Google)
 # ------------------------------------------------------------------------------
-# This tells Cognito to trust Google as a sign-in option.
-
 resource "aws_cognito_identity_provider" "google" {
   user_pool_id  = aws_cognito_user_pool.user_pool.id
   provider_name = "Google"
   provider_type = "Google"
 
   provider_details = {
-    client_id        = "YOUR_GOOGLE_CLIENT_ID" # You'll get this from the Google API Console
-    client_secret    = "YOUR_GOOGLE_CLIENT_SECRET" # You'll get this from the Google API Console
+    client_id        = var.google_client_id
+    client_secret    = var.google_client_secret
     authorize_scopes = "email openid profile"
   }
 
-  # Map attributes from Google to Cognito
   attribute_mapping = {
     email    = "email"
-    username = "sub" # 'sub' is Google's unique ID for the user
+    username = "sub"
   }
 }
 
 # ------------------------------------------------------------------------------
 # COGNITO USER POOL CLIENT
 # ------------------------------------------------------------------------------
-
 resource "aws_cognito_user_pool_client" "app_client" {
-  name = "momotaro-app-client"
+  name = "prepdeck-app-client" # Renamed to match your project
   user_pool_id = aws_cognito_user_pool.user_pool.id
   generate_secret = false
   explicit_auth_flows = ["ALLOW_USER_SRP_AUTH", "ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
-
-  # Tell the client that it's allowed to use the Google identity provider
   supported_identity_providers = ["Google", "COGNITO"]
   
-  # You'll need to provide the URL where users are sent after logging in/out
-  callback_urls = ["http://localhost:5173/"] # For local development
-  logout_urls   = ["http://localhost:5173/login"]
+  # 👇 THESE ARE THE REQUIRED ADDITIONS 👇
+  allowed_oauth_flows_user_pool_client = true
+  allowed_oauth_flows                  = ["code"]
+  allowed_oauth_scopes                 = ["email", "openid", "profile"]
+
+  # Update URLs to include production domain to match your Amplify config
+  callback_urls = [
+    "http://localhost:5173/",
+    "https://prepdeck.momotarosushi.ca/"
+  ]
+  logout_urls   = [
+    "http://localhost:5173/",
+    "https://prepdeck.momotarosushi.ca/"
+  ]
+}
+
+
+resource "aws_cognito_user_pool_domain" "main" {
+  # This is the unique prefix. Use your project name here.
+  # It must be unique across your AWS region.
+  domain       = "prepdeck" # <-- Use your chosen unique prefix
+
+  # This links the domain to your user pool.
+  user_pool_id = aws_cognito_user_pool.user_pool.id
 }
