@@ -82,12 +82,12 @@ resource "aws_cognito_user_pool_client" "app_client" {
   name = "momotaro-app-client"
   user_pool_id = aws_cognito_user_pool.user_pool.id
   generate_secret = false
-  explicit_auth_flows = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
+  explicit_auth_flows = ["ALLOW_USER_SRP_AUTH", "ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
 
   # Tell the client that it's allowed to use the Google identity provider
   supported_identity_providers = ["Google", "COGNITO"]
   
   # You'll need to provide the URL where users are sent after logging in/out
-  callback_urls = ["http://localhost:3000/"] # For local development
-  logout_urls   = ["http://localhost:3000/login"]
+  callback_urls = ["http://localhost:5173/"] # For local development
+  logout_urls   = ["http://localhost:5173/login"]
 }
