@@ -12,46 +12,37 @@ resource "aws_s3_bucket" "site_bucket" {
   }
 }
 
-# Add this resource to disable the "Block Public Access" settings
+# By default, S3 buckets block all public access. We will keep this secure
+# configuration and only allow CloudFront to access the bucket's contents.
 resource "aws_s3_bucket_public_access_block" "site_public_access_block" {
   bucket = aws_s3_bucket.site_bucket.id
 
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
 
-# Configure the S3 bucket to serve a static website.
-resource "aws_s3_bucket_website_configuration" "site_website_config" {
-  bucket = aws_s3_bucket.site_bucket.id
-
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "index.html"
-  }
-}
-
-# Create a policy to allow public read access to the bucket's objects.
+# This new policy grants the CloudFront Origin Access Identity (OAI)
+# permission to read objects from your bucket. No other access is allowed.
 resource "aws_s3_bucket_policy" "site_bucket_policy" {
   bucket = aws_s3_bucket.site_bucket.id
-
-  # THIS IS THE FIX: Explicitly wait for the public access block to be configured first.
-  depends_on = [aws_s3_bucket_public_access_block.site_public_access_block]
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid       = "PublicReadGetObject"
+        Sid       = "AllowCloudFrontAccess"
         Effect    = "Allow"
-        Principal = "*"
+        Principal = {
+          AWS = aws_cloudfront_origin_access_identity.oai.iam_arn
+        }
         Action    = "s3:GetObject"
         Resource  = "${aws_s3_bucket.site_bucket.arn}/*"
       }
     ]
   })
 }
+
+# NOTE: The 'aws_s3_bucket_website_configuration' resource has been removed.
+# It is not needed when serving content privately through CloudFront with an OAI.
