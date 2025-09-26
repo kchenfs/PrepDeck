@@ -4,39 +4,45 @@ import {
   Routes,
   Route,
   Navigate,
+  Outlet,
 } from 'react-router-dom';
+import { Authenticator } from '@aws-amplify/ui-react';
+import '@aws-amplify/ui-react/styles.css';
 import { DashboardPage } from './pages/DashboardPage';
-import { LoginPage } from './pages/LoginPage';
 import { HistoryPage } from './pages/HistoryPage';
 
-function App() {
-  // In a real application, you would have a state that tracks
-  // if the user is authenticated. We'll simulate it for now.
-  const isAuthenticated = true; // Change this to `false` to see the login page
-
+/**
+ * A layout component that protects all its child routes.
+ * If the user is not authenticated, it will render the Amplify Sign-In UI
+ * with the Google social provider button.
+ */
+const ProtectedRoutesLayout = () => {
   return (
-    <Router>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            isAuthenticated ? <DashboardPage /> : <Navigate to="/login" />
-          }
-        />
-        <Route
-          path="/history"
-          element={
-            isAuthenticated ? <HistoryPage /> : <Navigate to="/login" />
-          }
-        />
-        {/* Redirect root path to the dashboard */}
-        <Route
-          path="/"
-          element={<Navigate to="/dashboard" />}
-        />
-      </Routes>
-    </Router>
+    // This Authenticator component now protects all nested routes
+    // and is configured to show the Google sign-in option.
+    <Authenticator socialProviders={['google']}>
+      {/* The Outlet will render the matched child route (e.g., DashboardPage) */}
+      <Outlet />
+    </Authenticator>
+  );
+};
+
+function App() {
+  return (
+    <Authenticator.Provider>
+      <Router>
+        <Routes>
+          {/* All routes within ProtectedRoutesLayout require authentication */}
+          <Route element={<ProtectedRoutesLayout />}>
+            <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/history" element={<HistoryPage />} />
+          </Route>
+          
+          {/* Redirect any unmatched route to the dashboard */}
+          <Route path="*" element={<Navigate to="/dashboard" />} />
+        </Routes>
+      </Router>
+    </Authenticator.Provider>
   );
 }
 
