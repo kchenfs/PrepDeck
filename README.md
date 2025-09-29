@@ -207,4 +207,11 @@ Configure a Custom Domain:
 
 Go to Route 53 to manage your domain (e.g., momotarodashboard.com).
 
-Create a DNS record (an A record with an Alias) that points your desired URL (e.g., `
+Create a DNS record (an A record with an Alias) that points your desired URL (e.g., `)
+
+Looking at UberEats API, we will most likely want to work with the following functions: https://developer.uber.com/docs/eats/references/api/order_suite#tag/WebhookEvents/paths/webhookEvents/post
+
+    1. AcceptOrder
+    2. GetOrder
+
+Looking at DoorDash API we w

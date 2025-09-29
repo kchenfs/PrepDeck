@@ -11,3 +11,16 @@ variable "google_client_secret" {
   type        = string
   sensitive   = true
 }
+
+
+variable "uber_eats_client_id" {
+  description = "The Client ID for the Uber Eats API."
+  type        = string
+  sensitive   = true
+}
+
+variable "uber_eats_client_secret" {
+  description = "The Client Secret for the Uber Eats API."
+  type        = string
+  sensitive   = true
+}
