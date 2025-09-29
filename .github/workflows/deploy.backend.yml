@@ -1,0 +1,63 @@
+# .github/workflows/deploy-backend.yml
+
+name: Deploy Backend Lambda Functions
+
+# This workflow triggers on any push to the 'main' branch.
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    # These permissions are required for the OIDC integration to work.
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python environment
+      # Using Python 3.12, as it's the latest version supported by AWS Lambda
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+
+      # Step 3: Install dependencies into the ./dist folder
+      # Assumes a requirements.txt file exists in the 'backend' directory.
+      - name: Install dependencies
+        run: |
+          pip install -r backend/requirements.txt -t ./dist
+
+      # Step 4: Prepare deployment package by copying source code
+      - name: Prepare deployment package
+        run: |
+          cp backend/*.py ./dist/
+
+      # Step 5: Configure AWS credentials using OIDC
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_IAM_ROLE_FOR_OIDC_ARN }}
+          aws-region: ca-central-1 # Your AWS region
+
+      # Step 6: Deploy the WebhookIngestor Lambda Function
+      - name: Deploy WebhookIngestor Lambda
+        uses: aws-actions/aws-lambda-deploy@v1
+        with:
+          function-name: WebhookIngestor
+          code-artifacts-dir: ./dist
+
+      # Step 7: Deploy the OrderProcessor Lambda Function
+      - name: Deploy OrderProcessor Lambda
+        uses: aws-actions/aws-lambda-deploy@v1
+        with:
+          function-name: OrderProcessor
+          code-artifacts-dir: ./dist
+
