@@ -217,4 +217,9 @@ Looking at UberEats API, we will most likely want to work with the following fun
 Looking at DoorDash API we w
 
 
+
 Make SQS queue lambda tomomrrow.
+
+
+In the project discuss why we went with OAUth and Basic authentication, for the Webhook setup in developer dashboard. need to figure out how to configure a test event from uber dashboard and also configured our database for our items.
+
