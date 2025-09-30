@@ -147,10 +147,11 @@ resource "aws_iam_policy" "order_processor_policy" {
           aws_dynamodb_table.orders_table.arn
         ]
       },
+      # THIS IS THE CHANGE: Grant permission to the specific AppSync API
       {
         Action   = "appsync:GraphQL"
         Effect   = "Allow"
-        Resource = "*" # TODO: Replace with your specific AppSync API ARN when created
+        Resource = aws_appsync_graphql_api.orders_api.arn
       },
       {
         Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
@@ -173,7 +174,7 @@ resource "aws_lambda_function" "webhook_ingestor" {
   function_name = "WebhookIngestor"
   role          = aws_iam_role.webhook_ingestor_role.arn
   handler       = "webhook_ingestor.handler"
-  runtime       = "python3.13"
+  runtime       = "python3.12"
   
   filename         = "../backend/placeholder.zip"
   source_code_hash = filebase64sha256("../backend/placeholder.zip")
@@ -194,13 +195,15 @@ resource "aws_lambda_function" "order_processor" {
   function_name = "OrderProcessor"
   role          = aws_iam_role.order_processor_role.arn
   handler       = "order_processor.handler"
-  runtime       = "python3.13"
+  runtime       = "python3.12"
   filename      = "../backend/placeholder.zip"
   source_code_hash = filebase64sha256("../backend/placeholder.zip")
   timeout       = 30
 
   environment {
     variables = {
+      # THIS IS THE CHANGE: Add the AppSync API URL as an environment variable
+      APPSYNC_API_URL     = aws_appsync_graphql_api.orders_api.uris["GRAPHQL"]
       TOKEN_CACHE_TABLE   = aws_dynamodb_table.api_token_cache.name
       MENU_TABLE          = aws_dynamodb_table.menu_table.name
       ORDERS_TABLE        = aws_dynamodb_table.orders_table.name
