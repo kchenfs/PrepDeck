@@ -1,26 +1,85 @@
 // src/pages/DashboardPage.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { KanbanColumn } from '../components/dashboard/KanbanColumn';
-import type { Order } from '../types'; // FIX: 'type' added for verbatimModuleSyntax
+import type { Order } from '../types';
 import { Inbox, ChefHat, LayoutDashboard, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { API, graphqlOperation } from 'aws-amplify';
 
-// Mock data for demonstration
-const initialOrders: Order[] = [
-  { id: 1, displayId: "AB12", service: 'UberEats', time: '4:15 PM', items: [{ name: '经典汉堡', quantity: 2 }], state: 'queue', isUrgent: true },
-  { id: 2, displayId: "CD34", service: 'DoorDash', time: '4:12 PM', items: [{ name: '炸薯条', quantity: 1 }], state: 'preparing', isUrgent: false },
-];
+// THIS IS THE FIX: The subscription now requests the 'order' field,
+// which contains the JSON string of the order data.
+const onNewOrderSubscription = /* GraphQL */ `
+  subscription OnNewOrder {
+    onNewOrder {
+      order
+    }
+  }
+`;
+
+// Helper type for the subscription data
+type NewOrderSubscription = {
+  value: {
+    data: {
+      onNewOrder: {
+        order: string; // The data from the subscription is a JSON string
+      };
+    };
+  };
+};
 
 export function DashboardPage() {
-  const [orders, setOrders] = useState<Order[]>(initialOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
 
-  const handleStartPreparing = (id: number) => {
+  // This useEffect hook sets up the real-time subscription when the component mounts.
+  useEffect(() => {
+    console.log("Setting up AppSync subscription...");
+
+    const subscription = (API.graphql(
+      graphqlOperation(onNewOrderSubscription)
+    ) as any).subscribe({
+      next: ({ value }: NewOrderSubscription) => {
+        try {
+            console.log("Received new order data string:", value.data.onNewOrder.order);
+            
+            // The 'order' data from the mutation is a JSON string, so we need to parse it.
+            const newOrderData = JSON.parse(value.data.onNewOrder.order);
+            
+            // Transform the incoming data to match our frontend Order type
+            const newOrder: Order = {
+                id: newOrderData.OrderID,
+                displayId: newOrderData.DisplayID,
+                service: 'UberEats', // Assuming UberEats for now
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // Use current time, formatted
+                items: newOrderData.Items.map((item: any) => ({
+                    name: item.Title,
+                    quantity: item.Quantity
+                })),
+                state: 'queue', // New orders always start in the queue
+                isUrgent: false, // You can add logic for this later
+            };
+
+            setOrders((prevOrders) => [...prevOrders, newOrder]);
+        } catch (error) {
+            console.error("Error processing subscription message:", error);
+        }
+      },
+      error: (error: any) => console.warn(error)
+    });
+
+    // This cleanup function will run when the component unmounts.
+    return () => {
+      console.log("Tearing down AppSync subscription.");
+      subscription.unsubscribe();
+    };
+  }, []); // The empty dependency array means this effect runs only once.
+
+
+  const handleStartPreparing = (id: string) => {
     setOrders(prevOrders => prevOrders.map(o => o.id === id ? { ...o, state: 'preparing' } : o));
   };
 
-  const handleDone = (id: number) => {
+  const handleDone = (id: string) => {
     setOrders(prevOrders => prevOrders.filter(o => o.id !== id));
-    // Here you would also move the order to a 'pastOrders' state for the history page.
   };
 
   const queueOrders = orders.filter(o => o.state === 'queue');
@@ -60,3 +119,4 @@ export function DashboardPage() {
     </div>
   );
 }
+

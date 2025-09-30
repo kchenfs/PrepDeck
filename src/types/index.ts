@@ -7,8 +7,9 @@ export interface OrderItem {
 export type OrderService = 'UberEats' | 'DoorDash' | 'SkipTheDishes';
 export type OrderState = 'queue' | 'preparing';
 
+// This interface has been updated to match the data structure from your backend
 export interface Order {
-  id: number;
+  id: string; // Changed from number to string to match OrderID
   displayId: string;
   service: OrderService;
   time: string;
