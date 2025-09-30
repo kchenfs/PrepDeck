@@ -1,3 +1,5 @@
+// src/amplify-config.ts
+
 export const amplifyConfig = {
   Auth: {
     Cognito: {
@@ -24,6 +26,7 @@ export const amplifyConfig = {
     GraphQL: {
       endpoint: import.meta.env.VITE_APPSYNC_GRAPHQL_API_URL,
       region: import.meta.env.VITE_AWS_REGION,
+      // THIS IS THE FIX: In Amplify v6, the value is simplified to 'userPool'
       defaultAuthMode: 'userPool'
     }
   }
