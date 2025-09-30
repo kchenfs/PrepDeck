@@ -1,6 +1,4 @@
-import { ResourcesConfig } from 'aws-amplify';
-
-export const amplifyConfig: ResourcesConfig = {
+export const amplifyConfig = {
   Auth: {
     Cognito: {
       userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID,
@@ -11,22 +9,23 @@ export const amplifyConfig: ResourcesConfig = {
           scopes: ['email', 'openid', 'profile'],
           redirectSignIn: [
             'http://localhost:5173/',
-            'https://prepdeck.momotarosushi.ca/',
+            'https://prepdeck.momotarosushi.ca/'
           ],
           redirectSignOut: [
             'http://localhost:5173/',
-            'https://prepdeck.momotarosushi.ca/',
+            'https://prepdeck.momotarosushi.ca/'
           ],
           responseType: 'code',
-        },
-      },
-    },
+        }
+      }
+    }
   },
   API: {
     GraphQL: {
       endpoint: import.meta.env.VITE_APPSYNC_GRAPHQL_API_URL,
       region: import.meta.env.VITE_AWS_REGION,
-      defaultAuthMode: 'userPool', // now valid
-    },
-  },
+      // THIS IS THE FIX: In Amplify v6, the value is simplified to 'userPool'
+      defaultAuthMode: 'userPool' as const
+    }
+  }
 };
