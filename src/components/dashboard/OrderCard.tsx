@@ -1,11 +1,11 @@
 // src/components/dashboard/OrderCard.tsx
-import type { Order } from '../../types'; // FIX: Changed to 'import type'
+import type { Order } from '../../types';
 import { PlayCircle, CheckCheck, Siren } from 'lucide-react';
 
 interface OrderCardProps {
   order: Order;
-  onStartPreparing: (id: number) => void;
-  onDone: (id: number) => void;
+  onStartPreparing: (id: string) => void;
+  onDone: (id: string) => void;
 }
 
 const serviceConfig = {

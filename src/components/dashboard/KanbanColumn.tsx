@@ -1,13 +1,13 @@
 // src/components/dashboard/KanbanColumn.tsx
 import { OrderCard } from './OrderCard';
-import type { Order } from '../../types'; // FIX: Changed to 'import type'
+import type { Order } from '../../types';
 
 interface KanbanColumnProps {
   title: string;
   icon: React.ReactNode;
   orders: Order[];
-  onStartPreparing: (id: number) => void;
-  onDone: (id: number) => void;
+  onStartPreparing: (id: string) => void;
+  onDone: (id: string) => void;
 }
 
 export function KanbanColumn({ title, icon, orders, onStartPreparing, onDone }: KanbanColumnProps) {
