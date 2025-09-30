@@ -1,5 +1,3 @@
-// src/amplify-config.ts
-
 export const amplifyConfig = {
   Auth: {
     Cognito: {
@@ -25,9 +23,8 @@ export const amplifyConfig = {
   API: {
     GraphQL: {
       endpoint: import.meta.env.VITE_APPSYNC_GRAPHQL_API_URL,
-      region: import.meta.env.VITE_AWS_REGION, // e.g., 'ca-central-1'
-      // THIS IS THE FIX: 'authorizationType' is now 'defaultAuthMode'
-      // and the value is 'amazon_cognito_user_pools'
+      region: import.meta.env.VITE_AWS_REGION,
       defaultAuthMode: 'userPool'
+    }
   }
 };
