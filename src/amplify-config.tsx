@@ -22,13 +22,13 @@ export const amplifyConfig = {
       }
     }
   },
-  // THIS IS THE NEW SECTION
   API: {
     GraphQL: {
-      // Get these values from your `terraform output` command
       endpoint: import.meta.env.VITE_APPSYNC_GRAPHQL_API_URL,
       region: import.meta.env.VITE_AWS_REGION, // e.g., 'ca-central-1'
-      authorizationType: 'AMAZON_COGNITO_USER_POOLS'
+      // THIS IS THE FIX: 'authorizationType' is now 'defaultAuthMode'
+      // and the value is 'amazon_cognito_user_pools'
+      defaultAuthMode: 'amazon_cognito_user_pools'
     }
   }
 };

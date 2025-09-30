@@ -4,10 +4,13 @@ import { KanbanColumn } from '../components/dashboard/KanbanColumn';
 import type { Order } from '../types';
 import { Inbox, ChefHat, LayoutDashboard, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { API, graphqlOperation } from 'aws-amplify';
 
-// THIS IS THE FIX: The subscription now requests the 'order' field,
-// which contains the JSON string of the order data.
+// THIS IS THE FIX: Import the new client generator and types from aws-amplify/api
+import { generateClient, type GraphQLSubscription } from 'aws-amplify/api';
+
+// Create the API client
+const client = generateClient();
+
 const onNewOrderSubscription = /* GraphQL */ `
   subscription OnNewOrder {
     onNewOrder {
@@ -16,46 +19,40 @@ const onNewOrderSubscription = /* GraphQL */ `
   }
 `;
 
-// Helper type for the subscription data
+// Helper type for the subscription data, updated for v6
 type NewOrderSubscription = {
-  value: {
-    data: {
-      onNewOrder: {
-        order: string; // The data from the subscription is a JSON string
-      };
-    };
+  onNewOrder: {
+    order: string;
   };
 };
 
 export function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
 
-  // This useEffect hook sets up the real-time subscription when the component mounts.
   useEffect(() => {
     console.log("Setting up AppSync subscription...");
 
-    const subscription = (API.graphql(
-      graphqlOperation(onNewOrderSubscription)
-    ) as any).subscribe({
-      next: ({ value }: NewOrderSubscription) => {
+    // THIS IS THE FIX: Use the new client.graphql().subscribe() syntax
+    const subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
+      query: onNewOrderSubscription
+    }).subscribe({
+      next: ({ data }) => {
         try {
-            console.log("Received new order data string:", value.data.onNewOrder.order);
+            console.log("Received new order data string:", data.onNewOrder.order);
             
-            // The 'order' data from the mutation is a JSON string, so we need to parse it.
-            const newOrderData = JSON.parse(value.data.onNewOrder.order);
+            const newOrderData = JSON.parse(data.onNewOrder.order);
             
-            // Transform the incoming data to match our frontend Order type
             const newOrder: Order = {
                 id: newOrderData.OrderID,
                 displayId: newOrderData.DisplayID,
-                service: 'UberEats', // Assuming UberEats for now
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), // Use current time, formatted
+                service: 'UberEats',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 items: newOrderData.Items.map((item: any) => ({
                     name: item.Title,
                     quantity: item.Quantity
                 })),
-                state: 'queue', // New orders always start in the queue
-                isUrgent: false, // You can add logic for this later
+                state: 'queue',
+                isUrgent: false,
             };
 
             setOrders((prevOrders) => [...prevOrders, newOrder]);
@@ -63,15 +60,14 @@ export function DashboardPage() {
             console.error("Error processing subscription message:", error);
         }
       },
-      error: (error: any) => console.warn(error)
+      error: (error) => console.warn(error)
     });
 
-    // This cleanup function will run when the component unmounts.
     return () => {
       console.log("Tearing down AppSync subscription.");
       subscription.unsubscribe();
     };
-  }, []); // The empty dependency array means this effect runs only once.
+  }, []);
 
 
   const handleStartPreparing = (id: string) => {
@@ -119,4 +115,3 @@ export function DashboardPage() {
     </div>
   );
 }
-
