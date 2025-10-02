@@ -36,8 +36,6 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Install Amplify dependencies
-        run: npm install aws-amplify @aws-amplify/ui-react
 
       # THIS IS THE FIX: The 'env' block makes the GitHub Secrets available
       # as environment variables for the 'npm run build' command.
