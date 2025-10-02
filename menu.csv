@@ -1,0 +1,5 @@
+ItemID,UberEatsID,ItemName,Location,name_mandarin
+ITEM-001,pizza_cheese_18,Cheese Pizza 18,back,起司披萨
+ITEM-002,coke_can,Coke Can,front,可乐
+ITEM-003,fries_large,Large Fries,back,大薯条
+ITEM-004,house_salad,House Salad,both,招牌沙拉

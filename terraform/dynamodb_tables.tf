@@ -4,7 +4,7 @@
 # DYNAMODB TABLE FOR API TOKEN CACHING
 # ------------------------------------------------------------------------------
 resource "aws_dynamodb_table" "api_token_cache" {
-  name           = "ApiTokenCache"
+  name           = "Momotaro-Dashboard-ApiTokenCache"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "ProviderName"
 
@@ -23,7 +23,7 @@ resource "aws_dynamodb_table" "api_token_cache" {
 # DYNAMODB TABLE FOR THE MENU
 # ------------------------------------------------------------------------------
 resource "aws_dynamodb_table" "menu_table" {
-  name           = "Menu"
+  name           = "Momotaro-Dashboard-Menu"
   billing_mode   = "PAY_PER_REQUEST"
   hash_key       = "ItemID" # Your internal, primary ID
 

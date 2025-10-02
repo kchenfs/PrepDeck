@@ -5,11 +5,8 @@ import type { Order } from '../types';
 import { Inbox, ChefHat, LayoutDashboard, History } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-// THIS IS THE FIX: Import the new client generator and types from aws-amplify/api
+// Import the new client generator and types from aws-amplify/api
 import { generateClient, type GraphQLSubscription } from 'aws-amplify/api';
-
-// Create the API client
-const client = generateClient();
 
 const onNewOrderSubscription = /* GraphQL */ `
   subscription OnNewOrder {
@@ -19,7 +16,7 @@ const onNewOrderSubscription = /* GraphQL */ `
   }
 `;
 
-// Helper type for the subscription data, updated for v6
+// Helper type for the subscription data
 type NewOrderSubscription = {
   onNewOrder: {
     order: string;
@@ -32,7 +29,9 @@ export function DashboardPage() {
   useEffect(() => {
     console.log("Setting up AppSync subscription...");
 
-    // THIS IS THE FIX: Use the new client.graphql().subscribe() syntax
+    // Create the client inside useEffect to ensure Amplify is configured
+    const client = generateClient();
+
     const subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
       query: onNewOrderSubscription
     }).subscribe({
