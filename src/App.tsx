@@ -1,4 +1,5 @@
-// src/App.tsx
+// App.tsx - The cleanest approach
+
 import {
   BrowserRouter as Router,
   Routes,
@@ -6,39 +7,31 @@ import {
   Navigate,
   Outlet,
 } from 'react-router-dom';
-import { Authenticator } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
+import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import { DashboardPage } from './pages/DashboardPage';
 import { HistoryPage } from './pages/HistoryPage';
+import { RestoDashSignIn } from './components/auth/RestoDashSignIn';
 
-/**
- * A layout component that protects all its child routes.
- * If the user is not authenticated, it will render the Amplify Sign-In UI
- * with the Google social provider button.
- */
 const ProtectedRoutesLayout = () => {
-  return (
-    // This Authenticator component now protects all nested routes
-    // and is configured to show the Google sign-in option.
-    <Authenticator socialProviders={['google']}>
-      {/* The Outlet will render the matched child route (e.g., DashboardPage) */}
-      <Outlet />
-    </Authenticator>
-  );
+  const { authStatus } = useAuthenticator();
+  
+  if (authStatus !== 'authenticated') {
+    return <RestoDashSignIn />;
+  }
+  
+  return <Outlet />;
 };
 
 function App() {
   return (
+    // Authenticator.Provider gives you access to useAuthenticator hook AND handles auth state
     <Authenticator.Provider>
       <Router>
         <Routes>
-          {/* All routes within ProtectedRoutesLayout require authentication */}
           <Route element={<ProtectedRoutesLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/history" element={<HistoryPage />} />
           </Route>
-          
-          {/* Redirect any unmatched route to the dashboard */}
           <Route path="*" element={<Navigate to="/dashboard" />} />
         </Routes>
       </Router>

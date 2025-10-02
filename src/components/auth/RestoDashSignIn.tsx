@@ -7,7 +7,7 @@ import { useAuthenticator } from '@aws-amplify/ui-react';
 import {
   ShieldCheck, ChefHat, Pizza, Fish, Drumstick, Croissant,
   Sandwich, Carrot, Egg, Cookie, CupSoda, Utensils, Lock, User, Check,
-  Beef // <-- 1. IMPORT THE NEW BEEF ICON
+  Beef
 } from 'lucide-react';
 
 export function RestoDashSignIn() {
@@ -33,6 +33,18 @@ export function RestoDashSignIn() {
 
   return (
     <div className="bg-[#0a0a0a] text-white font-[Geist,sans-serif] antialiased selection:bg-white/10 selection:text-white">
+      {/* Add custom styles for autofill */}
+      <style>{`
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 30px rgb(39 39 42 / 0.5) inset !important;
+          -webkit-text-fill-color: white !important;
+          caret-color: white !important;
+        }
+      `}</style>
+
       {/* Background elements */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
       <div className="fixed inset-0 -z-10 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle at 20% 0%, #ffffff 0.7px, transparent 0.7px), radial-gradient(circle at 80% 100%, #ffffff 0.7px, transparent 0.7px)", backgroundSize: "36px 36px, 42px 42px" }}></div>
@@ -41,9 +53,9 @@ export function RestoDashSignIn() {
       <header className="absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 md:px-10">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-md bg-white/5 ring-1 ring-white/10 flex items-center justify-center">
-            <span className="text-sm font-semibold tracking-tight text-white/80">RD</span>
+            <span className="text-sm font-semibold tracking-tight text-white/80">PD</span>
           </div>
-          <span className="text-sm md:text-base font-medium tracking-tight text-white/80">RestoDash</span>
+          <span className="text-sm md:text-base font-medium tracking-tight text-white/80">PrepDeck</span>
         </div>
         <div className="hidden md:flex items-center gap-4 text-white/50">
           <div className="h-8 px-3 rounded-md bg-white/5 ring-1 ring-white/10 backdrop-blur flex items-center gap-2">
@@ -79,7 +91,6 @@ export function RestoDashSignIn() {
                       <div className="absolute top-1 right-14"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Cookie className="w-3.5 h-3.5 text-white/70" /></div></div>
                       <div className="absolute bottom-2 left-1/2 -ml-10"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><CupSoda className="w-3.5 h-3.5 text-white/70" /></div></div>
                       <div className="absolute top-8 right-1/2 -mr-7"><div className="w-5 h-5 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Utensils className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      {/* <-- 2. ADD THE NEW BEEF ICON ELEMENT --> */}
                       <div className="absolute -bottom-2 -right-4"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Beef className="w-4 h-4 text-white/70" /></div></div>
                     </div>
                   </div>
@@ -178,7 +189,7 @@ export function RestoDashSignIn() {
 
                 {/* Signup */}
                 <div className="text-center pt-2">
-                  <span className="text-sm text-white/60">Don’t have an account? </span>
+                  <span className="text-sm text-white/60">Don't have an account? </span>
                   <a href="#" onClick={toSignUp} className="text-sm font-medium text-white/80 hover:text-white hover:underline underline-offset-4">Create one</a>
                 </div>
               </form>
