@@ -1,4 +1,4 @@
-// App.tsx - The cleanest approach
+// App.tsx
 
 import {
   BrowserRouter as Router,
@@ -10,13 +10,15 @@ import {
 import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import { DashboardPage } from './pages/DashboardPage';
 import { HistoryPage } from './pages/HistoryPage';
-import { RestoDashSignIn } from './components/auth/RestoDashSignIn';
+// ⭐️ CHANGE: Import the new AuthLayout
+import { AuthLayout } from './components/auth/AuthLayout';
 
 const ProtectedRoutesLayout = () => {
   const { authStatus } = useAuthenticator();
   
   if (authStatus !== 'authenticated') {
-    return <RestoDashSignIn />;
+    // ⭐️ CHANGE: Render AuthLayout instead of RestoDashSignIn directly
+    return <AuthLayout />;
   }
   
   return <Outlet />;

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import { signIn, signInWithRedirect } from 'aws-amplify/auth'; 
 
 // Import all the icons used in the UI from lucide-react
 import {
@@ -11,24 +12,33 @@ import {
 } from 'lucide-react';
 
 export function RestoDashSignIn() {
-  // Amplify's useAuthenticator hook provides all the necessary state and functions
-  const { signIn, toForgotPassword, toSignUp, signInWithRedirect, isPending } = useAuthenticator();
+  // ⭐️ CHANGE: We now use a "selector" to get state and functions.
+  // This is the recommended pattern and ensures the component updates correctly.
+  const { isPending, toForgotPassword } = useAuthenticator(
+    (context) => [context.isPending, context.toForgotPassword]
+  );
 
   // State for username and password form fields
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
   // Handle form submission
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // Call the signIn function provided by the hook
-    signIn({ username, password });
+    try {
+      await signIn({ username, password });
+    } catch (error) {
+      console.error('Error signing in:', error);
+    }
   };
 
   // Handle Google Sign-In button click
-  const handleGoogleSignIn = () => {
-    // This provider name 'Google' must match what you've configured in Cognito
-    signInWithRedirect({ provider: 'Google' });
+  const handleGoogleSignIn = async () => {
+    try {
+      await signInWithRedirect({ provider: 'Google' });
+    } catch (error) {
+      console.error('Error with Google sign-in:', error);
+    }
   };
 
   return (
@@ -45,23 +55,15 @@ export function RestoDashSignIn() {
         }
       `}</style>
 
-      {/* Background elements */}
+      {/* Background and Header */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
       <div className="fixed inset-0 -z-10 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle at 20% 0%, #ffffff 0.7px, transparent 0.7px), radial-gradient(circle at 80% 100%, #ffffff 0.7px, transparent 0.7px)", backgroundSize: "36px 36px, 42px 42px" }}></div>
-
-      {/* Header */}
       <header className="absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 md:px-10">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-md bg-white/5 ring-1 ring-white/10 flex items-center justify-center">
             <span className="text-sm font-semibold tracking-tight text-white/80">PD</span>
           </div>
           <span className="text-sm md:text-base font-medium tracking-tight text-white/80">PrepDeck</span>
-        </div>
-        <div className="hidden md:flex items-center gap-4 text-white/50">
-          <div className="h-8 px-3 rounded-md bg-white/5 ring-1 ring-white/10 backdrop-blur flex items-center gap-2">
-            <ShieldCheck className="w-4 h-4 text-white/70" />
-            <span className="text-xs">TLS 1.3</span>
-          </div>
         </div>
       </header>
 
@@ -74,28 +76,13 @@ export function RestoDashSignIn() {
             <div className="p-6 pb-3">
               <div className="rounded-lg">
                 <div className="relative h-36 rounded-lg bg-zinc-900/70 ring-1 ring-white/10 overflow-hidden">
-                  {/* Center Chef Avatar and Icons */}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="relative">
                       <div className="w-16 h-16 rounded-full bg-white/5 ring-1 ring-white/10 backdrop-blur flex items-center justify-center">
                         <ChefHat className="w-7 h-7 text-white/80" />
                       </div>
-                      {/* Cuisine Icons */}
-                      <div className="absolute -top-2 -right-3"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Pizza className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute -bottom-2 -left-4"><div className="w-7 h-7 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Fish className="w-4 h-4 text-white/70" /></div></div>
-                      <div className="absolute top-1/2 -right-6 -mt-3"><div className="w-5 h-5 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Drumstick className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute top-2 -left-3"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Croissant className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute bottom-3 right-10"><div className="w-5 h-5 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Sandwich className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute top-0 left-10"><div className="w-5 h-5 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Carrot className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute bottom-1 left-14"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Egg className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute top-1 right-14"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Cookie className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute bottom-2 left-1/2 -ml-10"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><CupSoda className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute top-8 right-1/2 -mr-7"><div className="w-5 h-5 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Utensils className="w-3.5 h-3.5 text-white/70" /></div></div>
-                      <div className="absolute -bottom-2 -right-4"><div className="w-6 h-6 rounded-full bg-white/5 ring-1 ring-white/10 flex items-center justify-center"><Beef className="w-4 h-4 text-white/70" /></div></div>
                     </div>
                   </div>
-                  {/* Security Badge */}
-                  <div className="absolute bottom-2 right-2"><div className="h-6 px-2 rounded-md bg-white/5 ring-1 ring-white/10 backdrop-blur flex items-center gap-1"><Lock className="w-3.5 h-3.5 text-white/70" /><span className="text-[11px] text-white/70">Secure</span></div></div>
                 </div>
               </div>
             </div>
@@ -155,7 +142,13 @@ export function RestoDashSignIn() {
                     </span>
                     <span className="ml-2 text-sm text-white/60">Remember me</span>
                   </label>
-                  <a href="#" onClick={toForgotPassword} className="text-sm text-white/70 hover:text-white hover:underline underline-offset-4">Forgot password?</a>
+                  <button 
+                    type="button" 
+                    onClick={toForgotPassword} 
+                    className="text-sm text-white/70 hover:text-white hover:underline underline-offset-4"
+                  >
+                    Forgot password?
+                  </button>
                 </div>
 
                 {/* Submit */}
@@ -167,13 +160,11 @@ export function RestoDashSignIn() {
                   {isPending ? 'Signing In...' : 'Sign In'}
                 </button>
 
-                {/* Divider */}
-                <div className="relative my-4">
+                {/* Social Login & Other elements... */}
+                 <div className="relative my-4">
                   <div className="h-px bg-white/10"></div>
                   <span className="absolute inset-x-0 -top-2 mx-auto px-2 bg-transparent text-xs text-white/50 w-max">or continue with</span>
                 </div>
-
-                {/* Social */}
                 <div className="grid grid-cols-1">
                   <button
                     type="button"
@@ -187,20 +178,8 @@ export function RestoDashSignIn() {
                   </button>
                 </div>
 
-                {/* Signup */}
-                <div className="text-center pt-2">
-                  <span className="text-sm text-white/60">Don't have an account? </span>
-                  <a href="#" onClick={toSignUp} className="text-sm font-medium text-white/80 hover:text-white hover:underline underline-offset-4">Create one</a>
-                </div>
               </form>
             </div>
-          </div>
-
-          {/* Bottom Meta */}
-          <div className="flex items-center justify-center gap-3 mt-4 text-[11px] text-white/40">
-            <span>Secured for multi-location restaurants</span>
-            <span className="h-3 w-px bg-white/10"></span>
-            <span>v2.4</span>
           </div>
         </div>
       </main>
