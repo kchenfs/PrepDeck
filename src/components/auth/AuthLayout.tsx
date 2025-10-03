@@ -1,36 +1,40 @@
 // src/components/auth/AuthLayout.tsx
-import { useState, useEffect } from 'react';
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { useState } from 'react';
 import { RestoDashSignIn } from './RestoDashSignIn';
 import { PasswordResetRequest } from './PasswordResetRequest';
 import { PasswordResetConfirm } from './PasswordResetConfirm';
 
+type AuthView = 'signIn' | 'forgotPassword' | 'confirmReset';
+
 export const AuthLayout = () => {
-  // Get the 'route' from the authenticator's state
-  const { route } = useAuthenticator((context) => [context.route]);
-  
-  // Add state to hold the username during the password reset flow
+  const [currentView, setCurrentView] = useState<AuthView>('signIn');
   const [usernameForReset, setUsernameForReset] = useState('');
 
-  // Debug: Log route changes
-  useEffect(() => {
-    console.log('Current auth route:', route);
-  }, [route]);
+  console.log('🟢 AuthLayout - Current view:', currentView);
 
-  switch (route) {
-    case 'idle':
+  switch (currentView) {
     case 'signIn':
-    case 'setup':
-      return <RestoDashSignIn />;
+      return <RestoDashSignIn onForgotPassword={() => setCurrentView('forgotPassword')} />;
     
     case 'forgotPassword':
-      return <PasswordResetRequest setUsernameForReset={setUsernameForReset} />;
+      return (
+        <PasswordResetRequest 
+          setUsernameForReset={setUsernameForReset}
+          onCodeSent={() => setCurrentView('confirmReset')}
+          onBack={() => setCurrentView('signIn')}
+        />
+      );
     
-    case 'confirmResetPassword':
-      return <PasswordResetConfirm username={usernameForReset} />;
-      
+    case 'confirmReset':
+      return (
+        <PasswordResetConfirm 
+          username={usernameForReset}
+          onBack={() => setCurrentView('forgotPassword')}
+          onSuccess={() => setCurrentView('signIn')}
+        />
+      );
+    
     default:
-      console.log('Unhandled route, defaulting to sign in:', route);
-      return <RestoDashSignIn />;
+      return <RestoDashSignIn onForgotPassword={() => setCurrentView('forgotPassword')} />;
   }
 };

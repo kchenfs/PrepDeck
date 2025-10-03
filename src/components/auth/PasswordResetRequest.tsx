@@ -1,38 +1,35 @@
 // src/components/auth/PasswordResetRequest.tsx
 import { useState } from 'react';
-import { useAuthenticator } from '@aws-amplify/ui-react';
 import { Shield, User, ArrowLeft, ChefHat } from 'lucide-react';
-// ⭐️ Import the core resetPassword function
 import { resetPassword } from 'aws-amplify/auth';
 
-// ⭐️ Accept the setUsernameForReset function as a prop
 interface PasswordResetRequestProps {
   setUsernameForReset: (username: string) => void;
+  onCodeSent: () => void;
+  onBack: () => void;
 }
 
-export function PasswordResetRequest({ setUsernameForReset }: PasswordResetRequestProps) {
-  const { toSignIn } = useAuthenticator((context) => [context.toSignIn]);
+export function PasswordResetRequest({ setUsernameForReset, onCodeSent, onBack }: PasswordResetRequestProps) {
   const [username, setUsername] = useState('');
 
-  // ⭐️ Make the handler async to call the core auth function
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    
     try {
-      // First, set the username in the parent layout component
       setUsernameForReset(username);
-      // Then, call the core Amplify function
-      await resetPassword({ username });
-      // On success, the useAuthenticator 'route' will automatically change
-      // to 'confirmForgotPassword', causing AuthLayout to show the next screen.
+      const output = await resetPassword({ username });
+      
+      if (output.nextStep.resetPasswordStep === 'CONFIRM_RESET_PASSWORD_WITH_CODE') {
+        console.log('Confirmation code sent');
+        onCodeSent();
+      }
     } catch (error) {
       console.error("Error sending password reset code:", error);
-      // You can add user-facing error messages here
     }
   };
 
   return (
     <div className="bg-black text-white antialiased selection:bg-white/10 selection:text-white">
-      {/* Background and Header */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
       <div className="fixed inset-0 -z-10 opacity-[0.06]" style={{backgroundImage:"radial-gradient(circle at 20% 0%, #ffffff 0.7px, transparent 0.7px), radial-gradient(circle at 80% 100%, #ffffff 0.7px, transparent 0.7px)", backgroundSize: "36px 36px, 42px 42px"}}></div>
       <header className="absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 md:px-10">
@@ -47,7 +44,6 @@ export function PasswordResetRequest({ setUsernameForReset }: PasswordResetReque
       <main className="relative min-h-screen flex items-center justify-center p-4 md:p-6">
         <div className="w-full max-w-sm">
           <div className="relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-xl ring-1 ring-white/10 shadow-lg shadow-black/20">
-            {/* Visual Top */}
             <div className="p-6 pb-3">
               <div className="relative h-32 rounded-lg bg-zinc-900/70 ring-1 ring-white/10 overflow-hidden">
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -62,7 +58,6 @@ export function PasswordResetRequest({ setUsernameForReset }: PasswordResetReque
               </div>
             </div>
 
-            {/* Form */}
             <div className="px-6 pt-4 pb-6">
               <div className="text-center mb-6">
                 <h1 className="text-[22px] md:text-[24px] font-semibold tracking-tight text-white">Reset Password</h1>
@@ -92,7 +87,7 @@ export function PasswordResetRequest({ setUsernameForReset }: PasswordResetReque
                 </button>
                 <div className="relative my-3"><div className="h-px bg-white/10"></div></div>
                 <div className="flex items-center justify-center">
-                  <button type="button" onClick={toSignIn} className="text-sm text-white/70 hover:text-white hover:underline underline-offset-4 flex items-center gap-1.5">
+                  <button type="button" onClick={onBack} className="text-sm text-white/70 hover:text-white hover:underline underline-offset-4 flex items-center gap-1.5">
                     <ArrowLeft className="w-4 h-4" />
                     Back to sign in
                   </button>
