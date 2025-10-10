@@ -42,13 +42,13 @@ def get_uber_eats_token():
     print("No valid token in cache. Requesting a new one.")
     
     params = ssm.get_parameters(
-        Names=[CLIENT_ID_PARAM_NAME, CLIENT_SECRET_PARAM_NAME],
+        Names=[CLIENT_ID_PARAM_NAME_DEV, CLIENT_SECRET_PARAM_NAME_DEV],
         WithDecryption=True
     )
     
     creds = {p['Name']: p['Value'] for p in params['Parameters']}
     client_id = creds[CLIENT_ID_PARAM_NAME]
-    client_secret = creds[CLIENT_SECRET_PARAM_NAME]
+    client_secret = creds[CLIENT_SECRET_PARAM_NAME_DEV]
 
     auth_url = "https://auth.uber.com/oauth/v2/token"
     auth_payload = {

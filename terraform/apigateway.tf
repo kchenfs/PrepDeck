@@ -92,7 +92,7 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.webhook_ingestor.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_apigatewayv2_api.webhook_api.execution_arn}/*/${aws_apigatewayv2_route.webhook_post.route_key}"
+  source_arn    = "${aws_apigatewayv2_api.webhook_api.execution_arn}/*/*/webhooks/uber-eats"
 }
 
 

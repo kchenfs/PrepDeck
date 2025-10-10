@@ -209,8 +209,10 @@ resource "aws_lambda_function" "order_processor" {
       TOKEN_CACHE_TABLE   = aws_dynamodb_table.api_token_cache.name
       MENU_TABLE          = aws_dynamodb_table.menu_table.name
       ORDERS_TABLE        = aws_dynamodb_table.orders_table.name
-      CLIENT_ID_PARAM     = "/momotaro/uber_eats/client_id"
-      CLIENT_SECRET_PARAM = "/momotaro/uber_eats/client_secret"
+      CLIENT_ID_PARAM_PROD     = var.uber_eats_client_id_prod
+      CLIENT_SECRET_PARAM_PROD = var.uber_eats_client_secret_prod
+      CLIENT_ID_PARAM_DEV     = var.uber_eats_client_id_dev
+      CLIENT_SECRET_PARAM_DEV = var.uber_eats_client_secret_dev
     }
   }
 
