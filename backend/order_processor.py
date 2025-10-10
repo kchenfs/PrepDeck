@@ -47,7 +47,7 @@ def get_uber_eats_token():
     )
     
     creds = {p['Name']: p['Value'] for p in params['Parameters']}
-    client_id = creds[CLIENT_ID_PARAM_NAME]
+    client_id = creds[CLIENT_ID_PARAM_NAME_DEV]
     client_secret = creds[CLIENT_SECRET_PARAM_NAME_DEV]
 
     auth_url = "https://auth.uber.com/oauth/v2/token"

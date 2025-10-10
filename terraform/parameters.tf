@@ -26,12 +26,13 @@ resource "aws_ssm_parameter" "uber_eats_client_secret_prod" {
   tags = {
     Name        = "Uber Eats Client Secret"
     Environment = "Production"
+    overwrite = true
   }
 }
 
 
 resource "aws_ssm_parameter" "uber_eats_client_id_dev" {
-  name  = "/momotaro/uber_eats/client_id_prod"
+  name  = "/momotaro/uber_eats/client_id_dev"
   type  = "SecureString"
   value = var.uber_eats_client_id_dev
 
@@ -43,7 +44,7 @@ resource "aws_ssm_parameter" "uber_eats_client_id_dev" {
 
 # Parameter for the Uber Eats Client Secret
 resource "aws_ssm_parameter" "uber_eats_client_secret_dev" {
-  name  = "/momotaro/uber_eats/client_secret_prod"
+  name  = "/momotaro/uber_eats/client_secret_dev"
   type  = "SecureString"
   value = var.uber_eats_client_secret_dev
 
