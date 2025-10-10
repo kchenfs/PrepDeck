@@ -15,8 +15,8 @@ credentials = session.get_credentials()
 
 # Get environment variables set by Terraform
 TOKEN_CACHE_TABLE_NAME = os.environ.get('TOKEN_CACHE_TABLE')
-CLIENT_ID_PARAM_DEV = os.environ.get('CLIENT_ID_PARAM')
-CLIENT_SECRET_PARAM_DEV = os.environ.get('CLIENT_SECRET_PARAM')
+CLIENT_ID_PARAM_DEV = os.environ.get('CLIENT_ID_PARAM_DEV')
+CLIENT_SECRET_PARAM_DEV = os.environ.get('CLIENT_SECRET_PARAM_DEV')
 MENU_TABLE_NAME = os.environ.get('MENU_TABLE')
 ORDERS_TABLE_NAME = os.environ.get('ORDERS_TABLE')
 APPSYNC_API_URL = os.environ.get('APPSYNC_API_URL')
