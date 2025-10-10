@@ -174,7 +174,7 @@ resource "aws_lambda_function" "webhook_ingestor" {
   function_name = "WebhookIngestor"
   role          = aws_iam_role.webhook_ingestor_role.arn
   handler       = "webhook_ingestor.handler"
-  runtime       = "python3.12"
+  runtime       = "python3.13"
   
   filename         = "../backend/placeholder.zip"
   source_code_hash = filebase64sha256("../backend/placeholder.zip")
@@ -195,7 +195,7 @@ resource "aws_lambda_function" "order_processor" {
   function_name = "OrderProcessor"
   role          = aws_iam_role.order_processor_role.arn
   handler       = "order_processor.handler"
-  runtime       = "python3.12"
+  runtime       = "python3.13"
   filename      = "../backend/placeholder.zip"
   source_code_hash = filebase64sha256("../backend/placeholder.zip")
   timeout       = 30
