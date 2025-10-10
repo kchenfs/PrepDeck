@@ -15,8 +15,8 @@ credentials = session.get_credentials()
 
 # Get environment variables set by Terraform
 TOKEN_CACHE_TABLE_NAME = os.environ.get('TOKEN_CACHE_TABLE')
-CLIENT_ID_PARAM_NAME = os.environ.get('CLIENT_ID_PARAM')
-CLIENT_SECRET_PARAM_NAME = os.environ.get('CLIENT_SECRET_PARAM')
+CLIENT_ID_PARAM_DEV = os.environ.get('CLIENT_ID_PARAM')
+CLIENT_SECRET_PARAM_DEV = os.environ.get('CLIENT_SECRET_PARAM')
 MENU_TABLE_NAME = os.environ.get('MENU_TABLE')
 ORDERS_TABLE_NAME = os.environ.get('ORDERS_TABLE')
 APPSYNC_API_URL = os.environ.get('APPSYNC_API_URL')
@@ -42,13 +42,13 @@ def get_uber_eats_token():
     print("No valid token in cache. Requesting a new one.")
     
     params = ssm.get_parameters(
-        Names=[CLIENT_ID_PARAM_NAME_DEV, CLIENT_SECRET_PARAM_NAME_DEV],
+        Names=[CLIENT_ID_PARAM_DEV, CLIENT_SECRET_PARAM_DEV],
         WithDecryption=True
     )
     
     creds = {p['Name']: p['Value'] for p in params['Parameters']}
-    client_id = creds[CLIENT_ID_PARAM_NAME_DEV]
-    client_secret = creds[CLIENT_SECRET_PARAM_NAME_DEV]
+    client_id = creds[CLIENT_ID_PARAM_DEV]
+    client_secret = creds[CLIENT_SECRET_PARAM_DEV]
 
     auth_url = "https://auth.uber.com/oauth/v2/token"
     auth_payload = {
