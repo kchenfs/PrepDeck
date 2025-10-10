@@ -175,6 +175,8 @@ resource "aws_lambda_function" "webhook_ingestor" {
   role          = aws_iam_role.webhook_ingestor_role.arn
   handler       = "webhook_ingestor.handler"
   runtime       = "python3.13"
+  timeout       = 100
+
   
   filename         = "../backend/placeholder.zip"
   source_code_hash = filebase64sha256("../backend/placeholder.zip")
@@ -198,7 +200,7 @@ resource "aws_lambda_function" "order_processor" {
   runtime       = "python3.13"
   filename      = "../backend/placeholder.zip"
   source_code_hash = filebase64sha256("../backend/placeholder.zip")
-  timeout       = 30
+  timeout       = 100
 
   environment {
     variables = {
