@@ -10,14 +10,12 @@ import {
 import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import { DashboardPage } from './pages/DashboardPage';
 import { HistoryPage } from './pages/HistoryPage';
-// ⭐️ CHANGE: Import the new AuthLayout
 import { AuthLayout } from './components/auth/AuthLayout';
 
 const ProtectedRoutesLayout = () => {
   const { authStatus } = useAuthenticator();
   
   if (authStatus !== 'authenticated') {
-    // ⭐️ CHANGE: Render AuthLayout instead of RestoDashSignIn directly
     return <AuthLayout />;
   }
   
@@ -26,7 +24,6 @@ const ProtectedRoutesLayout = () => {
 
 function App() {
   return (
-    // Authenticator.Provider gives you access to useAuthenticator hook AND handles auth state
     <Authenticator.Provider>
       <Router>
         <Routes>

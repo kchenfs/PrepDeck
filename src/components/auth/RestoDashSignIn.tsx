@@ -1,38 +1,37 @@
 // src/components/auth/RestoDashSignIn.tsx
 
 import { useState } from 'react';
-import { useAuthenticator } from '@aws-amplify/ui-react';
-import { signIn, signInWithRedirect } from 'aws-amplify/auth'; 
-
-// Import all the icons used in the UI from lucide-react
+import { signIn, signInWithRedirect } from 'aws-amplify/auth';
 import {
-  ShieldCheck, ChefHat, Pizza, Fish, Drumstick, Croissant,
-  Sandwich, Carrot, Egg, Cookie, CupSoda, Utensils, Lock, User, Check,
-  Beef
+  ChefHat, Lock, User, Check,
 } from 'lucide-react';
 
-export function RestoDashSignIn() {
-  // ⭐️ CHANGE: We now use a "selector" to get state and functions.
-  // This is the recommended pattern and ensures the component updates correctly.
-  const { isPending, toForgotPassword } = useAuthenticator(
-    (context) => [context.isPending, context.toForgotPassword]
-  );
+interface RestoDashSignInProps {
+  onForgotPassword: () => void;
+}
 
-  // State for username and password form fields
+export function RestoDashSignIn({ onForgotPassword }: RestoDashSignInProps) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Handle form submission
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    setIsLoading(true);
+    
+    const formData = new FormData(event.currentTarget);
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+    
     try {
       await signIn({ username, password });
     } catch (error) {
       console.error('Error signing in:', error);
+      setIsLoading(false);
     }
   };
 
-  // Handle Google Sign-In button click
   const handleGoogleSignIn = async () => {
     try {
       await signInWithRedirect({ provider: 'Google' });
@@ -43,7 +42,6 @@ export function RestoDashSignIn() {
 
   return (
     <div className="bg-[#0a0a0a] text-white font-[Geist,sans-serif] antialiased selection:bg-white/10 selection:text-white">
-      {/* Add custom styles for autofill */}
       <style>{`
         input:-webkit-autofill,
         input:-webkit-autofill:hover,
@@ -54,8 +52,6 @@ export function RestoDashSignIn() {
           caret-color: white !important;
         }
       `}</style>
-
-      {/* Background and Header */}
       <div className="fixed inset-0 -z-10 bg-gradient-to-b from-black via-zinc-950 to-black"></div>
       <div className="fixed inset-0 -z-10 opacity-[0.06]" style={{ backgroundImage: "radial-gradient(circle at 20% 0%, #ffffff 0.7px, transparent 0.7px), radial-gradient(circle at 80% 100%, #ffffff 0.7px, transparent 0.7px)", backgroundSize: "36px 36px, 42px 42px" }}></div>
       <header className="absolute top-0 inset-x-0 flex items-center justify-between px-6 py-4 md:px-10">
@@ -66,13 +62,9 @@ export function RestoDashSignIn() {
           <span className="text-sm md:text-base font-medium tracking-tight text-white/80">PrepDeck</span>
         </div>
       </header>
-
-      {/* Main Content */}
       <main className="relative min-h-screen flex items-center justify-center p-4 md:p-6">
         <div className="w-full max-w-sm">
-          {/* Card */}
           <div className="relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-xl ring-1 ring-white/10 shadow-lg shadow-black/20">
-            {/* Visual Top */}
             <div className="p-6 pb-3">
               <div className="rounded-lg">
                 <div className="relative h-36 rounded-lg bg-zinc-900/70 ring-1 ring-white/10 overflow-hidden">
@@ -86,15 +78,11 @@ export function RestoDashSignIn() {
                 </div>
               </div>
             </div>
-
-            {/* Form */}
             <div className="px-6 pt-4 pb-6">
               <div className="text-center mb-6">
                 <h1 className="text-[22px] md:text-[24px] font-semibold tracking-tight text-white">Sign in to your restaurant dashboard</h1>
               </div>
-
               <form className="space-y-4" onSubmit={handleSubmit}>
-                {/* Username */}
                 <div>
                   <label htmlFor="username" className="block text-sm font-medium text-white/80 mb-2">Username</label>
                   <div className="relative">
@@ -107,14 +95,13 @@ export function RestoDashSignIn() {
                       autoComplete="username"
                       className="w-full h-11 rounded-md bg-white/5 text-white placeholder:text-white/40 ring-1 ring-white/10 focus:ring-2 focus:ring-zinc-500/40 focus:outline-none px-10 transition"
                       onChange={(e) => setUsername(e.target.value)}
+                      value={username}
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <User className="w-4 h-4 text-white/50" />
                     </div>
                   </div>
                 </div>
-
-                {/* Password */}
                 <div>
                   <label htmlFor="password"  className="block text-sm font-medium text-white/80 mb-2">Password</label>
                   <div className="relative">
@@ -125,42 +112,43 @@ export function RestoDashSignIn() {
                       required
                       placeholder="Enter your password"
                       className="w-full h-11 rounded-md bg-white/5 text-white placeholder:text-white/40 ring-1 ring-white/10 focus:ring-2 focus:ring-zinc-500/40 focus:outline-none px-10 transition"
+                      autoComplete="current-password"
                       onChange={(e) => setPassword(e.target.value)}
+                      value={password}
                     />
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Lock className="w-4 h-4 text-white/50" />
                     </div>
                   </div>
                 </div>
-
-                {/* Options */}
                 <div className="flex items-center justify-between">
                   <label className="inline-flex items-center cursor-pointer select-none">
-                    <input type="checkbox" className="peer sr-only" />
-                    <span className="h-4 w-4 rounded-[6px] bg-white/5 ring-1 ring-white/15 flex items-center justify-center transition peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-zinc-500/40">
-                      <Check className="w-3 h-3 text-white opacity-0 transition peer-checked:opacity-100" />
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer" 
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
+                    <span className="h-4 w-4 rounded-[6px] bg-white/5 ring-1 ring-white/15 flex items-center justify-center transition peer-focus:ring-2 peer-focus:ring-zinc-500/40">
+                      <Check className={`w-3 h-3 text-white transition ${rememberMe ? 'opacity-100' : 'opacity-0'}`} />
                     </span>
                     <span className="ml-2 text-sm text-white/60">Remember me</span>
                   </label>
-                  <button 
-                    type="button" 
-                    onClick={toForgotPassword} 
+                  <button
+                    type="button"
+                    onClick={onForgotPassword}
                     className="text-sm text-white/70 hover:text-white hover:underline underline-offset-4"
                   >
                     Forgot password?
                   </button>
                 </div>
-
-                {/* Submit */}
                 <button
                   type="submit"
                   className="w-full h-11 rounded-md bg-blue-600 text-white font-medium tracking-tight ring-1 ring-white/10 hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition disabled:opacity-70"
-                  disabled={isPending}
+                  disabled={isLoading}
                 >
-                  {isPending ? 'Signing In...' : 'Sign In'}
+                  {isLoading ? 'Signing In...' : 'Sign In'}
                 </button>
-
-                {/* Social Login & Other elements... */}
                  <div className="relative my-4">
                   <div className="h-px bg-white/10"></div>
                   <span className="absolute inset-x-0 -top-2 mx-auto px-2 bg-transparent text-xs text-white/50 w-max">or continue with</span>
@@ -177,7 +165,6 @@ export function RestoDashSignIn() {
                     <span className="text-sm font-medium">Google</span>
                   </button>
                 </div>
-
               </form>
             </div>
           </div>
