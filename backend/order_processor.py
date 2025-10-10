@@ -59,9 +59,10 @@ def get_uber_eats_token():
     }
     
     response = requests.post(auth_url, data=auth_payload)
+    print("auth payload:", auth_payload)
     response.raise_for_status()
     token_data = response.json()
-    
+    print("token_data:", token_data)
     access_token = token_data['access_token']
     expires_in = token_data['expires_in']
     
