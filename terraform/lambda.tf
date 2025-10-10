@@ -133,10 +133,8 @@ resource "aws_iam_policy" "order_processor_policy" {
       {
         Action   = "ssm:GetParameters"
         Effect   = "Allow"
-        Resource = [
-          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/momotaro/uber_eats/client_id",
-          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/momotaro/uber_eats/client_secret"
-        ]
+        Resource = ["arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/momotaro/uber_eats/*"]
+
       },
       {
         Action   = ["dynamodb:Query", "dynamodb:PutItem", "dynamodb:GetItem", "dynamodb:UpdateItem"]
@@ -204,16 +202,19 @@ resource "aws_lambda_function" "order_processor" {
 
   environment {
     variables = {
-      # THIS IS THE CHANGE: Add the AppSync API URL as an environment variable
-      APPSYNC_API_URL     = aws_appsync_graphql_api.orders_api.uris["GRAPHQL"]
-      TOKEN_CACHE_TABLE   = aws_dynamodb_table.api_token_cache.name
-      MENU_TABLE          = aws_dynamodb_table.menu_table.name
-      ORDERS_TABLE        = aws_dynamodb_table.orders_table.name
-      CLIENT_ID_PARAM_PROD     = var.uber_eats_client_id_prod
-      CLIENT_SECRET_PARAM_PROD = var.uber_eats_client_secret_prod
-      CLIENT_ID_PARAM_DEV     = var.uber_eats_client_id_dev
-      CLIENT_SECRET_PARAM_DEV = var.uber_eats_client_secret_dev
-    }
+      APPSYNC_API_URL          = aws_appsync_graphql_api.orders_api.uris["GRAPHQL"]
+      TOKEN_CACHE_TABLE        = aws_dynamodb_table.api_token_cache.name
+      MENU_TABLE               = aws_dynamodb_table.menu_table.name
+      ORDERS_TABLE             = aws_dynamodb_table.orders_table.name
+      
+      # 👇 CORRECTED LINES 👇
+      # Pass the NAMES of the SSM parameters, not the secret values
+      CLIENT_ID_PARAM_DEV      = aws_ssm_parameter.uber_eats_client_id_dev.name
+      CLIENT_SECRET_PARAM_DEV  = aws_ssm_parameter.uber_eats_client_secret_dev.name
+      CLIENT_ID_PARAM_PROD     = aws_ssm_parameter.uber_eats_client_id_prod.name
+      CLIENT_SECRET_PARAM_PROD = aws_ssm_parameter.uber_eats_client_secret_prod.name
+      
+     }
   }
 
   tags = {

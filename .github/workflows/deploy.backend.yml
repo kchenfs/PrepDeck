@@ -53,6 +53,8 @@ jobs:
         with:
           function-name: WebhookIngestor
           code-artifacts-dir: ./dist
+          runtime: python3.13
+          handler: webhook_ingestor.lambda_handler
 
       # Step 7: Deploy the OrderProcessor Lambda Function
       - name: Deploy OrderProcessor Lambda
@@ -60,4 +62,6 @@ jobs:
         with:
           function-name: OrderProcessor
           code-artifacts-dir: ./dist
+          runtime: python3.13
+          handler: order_processor.lambda_handler
 
