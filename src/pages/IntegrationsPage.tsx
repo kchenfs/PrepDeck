@@ -1,14 +1,13 @@
 // src/pages/IntegrationsPage.tsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { Auth } from 'aws-amplify';
 import {
   Plug,
   LayoutDashboard,
   CheckCircle,
   Circle,
   Info,
-  // Check, // --- REMOVED ---
-  // Settings, // --- REMOVED ---
   XCircle
 } from 'lucide-react';
 
@@ -50,27 +49,43 @@ export function IntegrationsPage() {
   }, []); // This empty array [] correctly makes this run ONLY ONCE on mount
 
   // --- Handlers ---
-  const handleUberConnect = () => {
+  const handleUberConnect = async () => {
     console.log('Initiating Uber Eats connection...');
     
-    const clientId = import.meta.env.VITE_UBER_CLIENT_ID;
-    const redirectUri = import.meta.env.VITE_UBER_REDIRECT_URI; 
-
-    if (!clientId) {
-        console.error("*DEV*Uber Client ID is not configured in environment variables (VITE_UBER_CLIENT_ID).");
-        alert("Configuration error: Unable to initiate Uber Eats connection. Client ID missing.");
+    try {
+      // Get the current authenticated user
+      const currentUser = await Auth.currentAuthenticatedUser();
+      const userId = currentUser.attributes.sub;
+      
+      if (!userId) {
+        console.error("Unable to retrieve user ID from authentication.");
+        alert("Authentication error: Unable to retrieve user information.");
         return;
-    }
-    
-    if (!redirectUri || redirectUri.includes('YOUR_BACKEND')) {
-         console.error("Uber Backend Callback URL is not configured in .env (VITE_UBER_REDIRECT_URI).");
-         alert("Configuration error: Backend callback URL is missing.");
-         return;
-    }
+      }
 
-    const scope = 'eats.pos_provisioning';
-    const authorizeUrl = `https://auth.uber.com/oauth/v2/authorize?client_id=${clientId}&response_type=code&scope=${scope}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-    window.location.href = authorizeUrl;
+      const clientId = import.meta.env.VITE_UBER_CLIENT_ID;
+      const redirectUri = import.meta.env.VITE_UBER_REDIRECT_URI; 
+
+      if (!clientId) {
+          console.error("Uber Client ID is not configured in environment variables (VITE_UBER_CLIENT_ID).");
+          alert("Configuration error: Unable to initiate Uber Eats connection. Client ID missing.");
+          return;
+      }
+      
+      if (!redirectUri || redirectUri.includes('YOUR_BACKEND')) {
+           console.error("Uber Backend Callback URL is not configured in .env (VITE_UBER_REDIRECT_URI).");
+           alert("Configuration error: Backend callback URL is missing.");
+           return;
+      }
+
+      const scope = 'eats.pos_provisioning';
+      // Pass the user ID as the state parameter
+      const authorizeUrl = `https://auth.uber.com/oauth/v2/authorize?client_id=${clientId}&response_type=code&scope=${scope}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(userId)}`;
+      window.location.href = authorizeUrl;
+    } catch (error) {
+      console.error("Error initiating Uber Eats connection:", error);
+      alert("Authentication error: Please ensure you are logged in.");
+    }
   };
 
   const handleDoorDashConnect = () => {
@@ -255,9 +270,6 @@ export function IntegrationsPage() {
             </div>
           </div>
         </div>
-
-        {/* --- SECTION REMOVED --- */}
-        {/* The "Recent Activity" section that was here has been removed. */}
 
       </main>
     </div>

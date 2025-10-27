@@ -125,26 +125,19 @@ def handler(event, context):
     """
     print(f"Received callback event: {json.dumps(event)}")
 
-    query_params = event.get('queryStringParameters', {})
+    # This change ensures query_params is ALWAYS a dictionary, even if event.get() returns None
+    query_params = event.get('queryStringParameters') or {} 
+
     auth_code = query_params.get('code')
-    # TODO: Implement State parameter validation for CSRF protection
-    # received_state = query_params.get('state')
-    # expected_state = get_expected_state_for_user(...) # Retrieve state stored earlier
-    # if not received_state or received_state != expected_state:
-    #     print("Error: Invalid state parameter.")
-    #     return redirect_to_frontend(FRONTEND_REDIRECT_ERROR)
+    # Read the state parameter which contains the user ID
+    user_id = query_params.get('state')
 
-    # --- TODO: Identify the PrepDeck User ---
-    # How you get the user ID depends on your API Gateway auth setup.
-    # Option 1: If using Cognito Authorizer:
-    # user_id = event.get('requestContext', {}).get('authorizer', {}).get('claims', {}).get('sub')
-    # Option 2: Retrieve based on validated 'state' parameter (see TODO above)
-    user_id = "placeholder-user-id" # REPLACE with actual user identification logic
-    if not user_id or user_id == "placeholder-user-id":
-         print("Error: Could not determine PrepDeck user ID.")
-         return redirect_to_frontend(FRONTEND_REDIRECT_ERROR)
-    # --- End User Identification ---
+    # Validate that we have a user ID
+    if not user_id:
+        print("Error: User ID not found in state parameter.")
+        return redirect_to_frontend(FRONTEND_REDIRECT_ERROR)
 
+    print(f"Processing OAuth callback for user: {user_id}")
 
     if not auth_code:
         print("Error: Authorization code not found in callback.")
