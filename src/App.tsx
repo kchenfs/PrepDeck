@@ -10,6 +10,7 @@ import {
 import { Authenticator, useAuthenticator } from '@aws-amplify/ui-react';
 import { DashboardPage } from './pages/DashboardPage';
 import { HistoryPage } from './pages/HistoryPage';
+import { IntegrationsPage } from './pages/IntegrationsPage';
 import { AuthLayout } from './components/auth/AuthLayout';
 
 const ProtectedRoutesLayout = () => {
@@ -28,6 +29,7 @@ function App() {
       <Router>
         <Routes>
           <Route element={<ProtectedRoutesLayout />}>
+            <Route path="/integrations" element={<IntegrationsPage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/history" element={<HistoryPage />} />
           </Route>

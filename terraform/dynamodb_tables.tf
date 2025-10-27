@@ -71,3 +71,35 @@ resource "aws_dynamodb_table" "orders_table" {
   }
 }
 
+resource "aws_dynamodb_table" "integration_mapping" {
+  name           = "Prepdeck-integration-mapping"
+  billing_mode   = "PAY_PER_REQUEST"
+  hash_key       = "userId"        # e.g., Cognito User Sub or your internal User ID
+  range_key      = "integrationId" # e.g., "uber-{store_id}" or just "{store_id}" if only Uber for now
+
+  attribute {
+    name = "userId"
+    type = "S"
+  }
+
+  attribute {
+    name = "integrationId"
+    type = "S"
+  }
+
+  # Optional: Add other attributes like 'serviceName', 'connectedAt', etc.
+  # attribute {
+  #   name = "serviceName"
+  #   type = "S"
+  # }
+  # attribute {
+  #   name = "connectedAt"
+  #   type = "S" # Store as ISO 8601 string
+  # }
+
+}
+
+# Add an output for the table name
+output "integration_mapping_table_name" {
+  value = aws_dynamodb_table.integration_mapping.name
+}

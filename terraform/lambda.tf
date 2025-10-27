@@ -230,3 +230,133 @@ resource "aws_lambda_event_source_mapping" "order_processor_trigger" {
   batch_size       = 1
 }
 
+
+
+
+
+# --- Uber OAuth Callback Lambda ---
+
+# IAM Role for the OAuth Callback Lambda
+resource "aws_iam_role" "uber_oauth_callback_lambda_role" {
+  name = "prepdeck-dev-uber-oauth-callback-lambda-role" # UPDATED NAME
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "lambda.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = {
+    Name        = "prepdeck-uber-oauth-callback-lambda-role" # UPDATED TAGS
+    Environment = "dev"                                      # UPDATED TAGS
+    Project     = "prepdeck"                                 # ADDED TAG
+  }
+}
+
+# Policy allowing access to CloudWatch Logs, DynamoDB, and SSM Parameters
+resource "aws_iam_policy" "uber_oauth_callback_lambda_policy" {
+  name        = "prepdeck-dev-uber-oauth-callback-lambda-policy" # UPDATED NAME
+  description = "IAM policy for Uber OAuth Callback Lambda"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Effect   = "Allow"
+        Resource = "arn:aws:logs:*:*:*"
+      },
+      {
+        Action = [
+          "dynamodb:PutItem",
+          "dynamodb:GetItem", # If you need to check existing connections
+          "dynamodb:Query"    # If you need to query based on userId
+        ]
+        Effect   = "Allow"
+        # Ensure aws_dynamodb_table.integration_mapping is defined elsewhere (e.g., dynamodb_tables.tf)
+        Resource = aws_dynamodb_table.integration_mapping.arn # Grant access ONLY to the specific table
+      },
+      {
+        Action = [
+          "ssm:GetParameter",
+          "ssm:GetParameters"
+        ]
+        Effect = "Allow"
+        # Grant access ONLY to the specific parameters needed
+        Resource = [
+          # Assuming you are deploying 'dev'. If 'prod', change _dev to _prod.
+          aws_ssm_parameter.uber_eats_client_id_dev.arn,
+          aws_ssm_parameter.uber_eats_client_secret_dev.arn
+        ]
+      }
+    ]
+  })
+}
+
+# Attach the policy to the role
+resource "aws_iam_role_policy_attachment" "uber_oauth_callback_lambda_attach" {
+  role       = aws_iam_role.uber_oauth_callback_lambda_role.name
+  policy_arn = aws_iam_policy.uber_oauth_callback_lambda_policy.arn
+}
+
+# Lambda Function for handling the OAuth callback
+resource "aws_lambda_function" "uber_oauth_callback_lambda" {
+  filename      = "../backend/placeholder.zip"
+  source_code_hash = filebase64sha256("../backend/placeholder.zip")
+  function_name = "prepdeck-dev-uber-oauth-callback" # UPDATED NAME
+  role          = aws_iam_role.uber_oauth_callback_lambda_role.arn
+  handler       = "auth_callback_handler.handler" # Python Filename.Function Name
+
+  # You might need to adjust source_code_hash or use S3 deployment for updates
+  # source_code_hash = filebase64sha256("../backend/uber_oauth_callback_package.zip")
+
+  runtime = "python3.13" # Or your preferred Python runtime
+
+  environment {
+    variables = {
+      # Make sure aws_dynamodb_table.integration_mapping is defined elsewhere
+      INTEGRATION_TABLE_NAME   = aws_dynamodb_table.integration_mapping.name
+      # Pass the NAMES (paths) of your existing SSM parameters
+      # Assuming you are deploying 'dev'. If 'prod', change _dev to _prod.
+      UBER_CLIENT_ID_PARAM     = aws_ssm_parameter.uber_eats_client_id_dev.name
+      UBER_CLIENT_SECRET_PARAM = aws_ssm_parameter.uber_eats_client_secret_dev.name
+      # Use variables defined in variables.tf (ensure they exist)
+      FRONTEND_REDIRECT_SUCCESS = var.frontend_url_success
+      FRONTEND_REDIRECT_ERROR   = var.frontend_url_error
+      # COGNITO_USER_POOL_ID = aws_cognito_user_pool.user_pool.id # Uncomment if needed
+    }
+  }
+
+  tags = {
+    Name        = "prepdeck-uber-oauth-callback" # UPDATED TAGS
+    Environment = "dev"                          # UPDATED TAGS
+    Project     = "prepdeck"                     # ADDED TAG
+  }
+
+  # Ensure dependencies like the IAM policy attachment and DynamoDB table are created first
+  depends_on = [
+    aws_iam_role_policy_attachment.uber_oauth_callback_lambda_attach,
+    aws_dynamodb_table.integration_mapping, # Ensure this table is defined
+    aws_ssm_parameter.uber_eats_client_id_dev,     # Add explicit dependency
+    aws_ssm_parameter.uber_eats_client_secret_dev  # Add explicit dependency
+  ]
+}
+
+# Add outputs for Lambda ARN
+output "uber_oauth_callback_lambda_arn" {
+  value = aws_lambda_function.uber_oauth_callback_lambda.arn
+}
+output "uber_oauth_callback_lambda_invoke_arn" {
+   value = aws_lambda_function.uber_oauth_callback_lambda.invoke_arn
+}
