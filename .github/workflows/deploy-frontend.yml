@@ -46,6 +46,8 @@ jobs:
           VITE_COGNITO_DOMAIN: ${{ secrets.VITE_COGNITO_DOMAIN }}
           VITE_APPSYNC_GRAPHQL_API_URL: ${{ secrets.VITE_APPSYNC_GRAPHQL_API_URL }}
           VITE_AWS_REGION: ${{ secrets.VITE_AWS_REGION }}
+          VITE_UBER_CLIENT_ID: ${{ secrets.VITE_UBER_CLIENT_ID }}
+          VITE_UBER_REDIRECT_URI: ${{ secrets.VITE_UBER_REDIRECT_URI }}
         run: npm run build
 
       - name: Deploy to S3
