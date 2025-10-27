@@ -61,3 +61,9 @@ jobs:
           aws lambda update-function-code \
             --function-name prepdeck-dev-uber-oauth-callback \
             --zip-file fileb://deployment_package.zip
+
+
+
+            "Resource": [
+          "arn:aws:lambda:ca-central-1:798965869505:function:*"
+        ]

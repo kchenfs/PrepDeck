@@ -7,8 +7,9 @@ import {
   CheckCircle,
   Circle,
   Info,
-  Check,
-  Settings
+  // Check, // --- REMOVED ---
+  // Settings, // --- REMOVED ---
+  XCircle
 } from 'lucide-react';
 
 // Define the possible connection statuses
@@ -23,7 +24,6 @@ export function IntegrationsPage() {
   // --- Effects ---
   useEffect(() => {
     const timer = setTimeout(() => {
-      setUberStatus((prevStatus) => (prevStatus === 'loading' ? 'connected' : prevStatus));
       setDoorDashStatus((prevStatus) => (prevStatus === 'loading' ? 'disconnected' : prevStatus));
       setSkipStatus((prevStatus) => (prevStatus === 'loading' ? 'disconnected' : prevStatus));
     }, 1500);
@@ -39,25 +39,31 @@ export function IntegrationsPage() {
             setUberStatus('error');
             console.error("Uber Eats integration connection failed.");
         }
+        // This line is perfect, it cleans the URL after you read the params
         window.history.replaceState({}, document.title, window.location.pathname);
+    } else {
+      // Set default Uber status if no param
+      setUberStatus((prevStatus) => (prevStatus === 'loading' ? 'disconnected' : prevStatus));
     }
 
     return () => clearTimeout(timer);
-  }, []);
+  }, []); // This empty array [] correctly makes this run ONLY ONCE on mount
 
   // --- Handlers ---
   const handleUberConnect = () => {
     console.log('Initiating Uber Eats connection...');
+    
     const clientId = import.meta.env.VITE_UBER_CLIENT_ID;
-    const redirectUri = 'YOUR_BACKEND_API_GATEWAY_CALLBACK_URL';
+    const redirectUri = import.meta.env.VITE_UBER_REDIRECT_URI; 
 
     if (!clientId) {
         console.error("Uber Client ID is not configured in environment variables (VITE_UBER_CLIENT_ID).");
         alert("Configuration error: Unable to initiate Uber Eats connection. Client ID missing.");
         return;
     }
-    if (!redirectUri || redirectUri === 'YOUR_BACKEND_API_GATEWAY_CALLBACK_URL') {
-         console.error("Uber Backend Callback URL is not configured in the code.");
+    
+    if (!redirectUri || redirectUri.includes('YOUR_BACKEND')) {
+         console.error("Uber Backend Callback URL is not configured in .env (VITE_UBER_REDIRECT_URI).");
          alert("Configuration error: Backend callback URL is missing.");
          return;
     }
@@ -97,9 +103,19 @@ export function IntegrationsPage() {
           <p className="text-gray-400 text-sm">Connect your PrepDeck account to delivery platforms to automatically receive and manage orders.</p>
         </div>
 
+        {/* Global error message for Uber */}
+        {uberStatus === 'error' && (
+          <div className="bg-red-900/50 border border-red-700 text-red-300 p-4 rounded-lg mb-6 flex items-center gap-3">
+            <XCircle className="w-5 h-5 flex-shrink-0" />
+            <p className="text-sm font-medium">
+              There was an error connecting your Uber Eats account. Please try again or contact support.
+            </p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {/* Uber Eats Card */}
-          <div className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all p-6 flex flex-col">
+          <div className={`bg-gray-800 rounded-lg border ${uberStatus === 'error' ? 'border-red-700' : 'border-gray-700'} hover:border-gray-600 transition-all p-6 flex flex-col`}>
             <div className="flex items-start justify-between mb-4">
               <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
                 <span className="text-green-400 font-semibold text-lg tracking-tight">UE</span>
@@ -133,8 +149,9 @@ export function IntegrationsPage() {
               <button 
                 onClick={handleUberConnect}
                 className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+                disabled={uberStatus === 'loading'}
               >
-                Connect to Uber Eats
+                {uberStatus === 'loading' ? 'Loading...' : 'Connect to Uber Eats'}
               </button>
             )}
           </div>
@@ -174,8 +191,9 @@ export function IntegrationsPage() {
               <button 
                 onClick={handleDoorDashConnect}
                 className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+                disabled={doorDashStatus === 'loading'}
               >
-                Connect to DoorDash
+                {doorDashStatus === 'loading' ? 'Loading...' : 'Connect to DoorDash'}
               </button>
             )}
           </div>
@@ -215,8 +233,9 @@ export function IntegrationsPage() {
               <button 
                 onClick={handleSkipConnect}
                 className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+                disabled={skipStatus === 'loading'}
               >
-                Connect to Skip
+                {skipStatus === 'loading' ? 'Loading...' : 'Connect to Skip'}
               </button>
             )}
           </div>
@@ -237,34 +256,9 @@ export function IntegrationsPage() {
           </div>
         </div>
 
-        {/* Recent Activity */}
-        <div className="mt-6">
-          <h2 className="text-base font-semibold text-white mb-4">Recent Activity</h2>
-          <div className="bg-gray-800 rounded-lg border border-gray-700 divide-y divide-gray-700">
-            <div className="p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-500/10 rounded-md flex items-center justify-center">
-                  <Check className="w-4 h-4 text-green-400" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-white">Uber Eats connected</p>
-                  <p className="text-xs text-gray-400">2 days ago</p>
-                </div>
-              </div>
-            </div>
-            <div className="p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-indigo-500/10 rounded-md flex items-center justify-center">
-                  <Settings className="w-4 h-4 text-indigo-400" strokeWidth={1.5} />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-white">Integration settings updated</p>
-                  <p className="text-xs text-gray-400">1 week ago</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* --- SECTION REMOVED --- */}
+        {/* The "Recent Activity" section that was here has been removed. */}
+
       </main>
     </div>
   );
