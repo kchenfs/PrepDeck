@@ -5,183 +5,77 @@ import {
   Plug,
   LayoutDashboard,
   CheckCircle,
-  Clock,
-  Settings,
-  Link2, // Icon for Connect button
-  Loader2, // Icon for Loading state
-  XCircle // Icon for Error state (optional)
+  Circle,
+  Info,
+  Check,
+  Settings
 } from 'lucide-react';
 
 // Define the possible connection statuses
 type ConnectionStatus = 'loading' | 'connected' | 'disconnected' | 'error';
 
-// --- IMPORTANT: Build Configuration Note ---
-// To use `import.meta.env`, ensure your tsconfig.json (and tsconfig.app.json if it overrides)
-// has compilerOptions.target set to 'ES2020' or higher.
-// Example in tsconfig.json:
-// {
-//   "compilerOptions": {
-//     "target": "ES2020",
-//     "module": "ESNext",
-//     // ... other options
-//   }
-// }
-// Also ensure your vite.config.ts doesn't explicitly target an older version.
-
 export function IntegrationsPage() {
   // --- State Hooks ---
   const [uberStatus, setUberStatus] = useState<ConnectionStatus>('loading');
-  const [doorDashStatus, setDoorDashStatus] = useState<ConnectionStatus>('loading'); // Placeholder
-  const [skipStatus, setSkipStatus] = useState<ConnectionStatus>('loading'); // Placeholder
+  const [doorDashStatus, setDoorDashStatus] = useState<ConnectionStatus>('loading');
+  const [skipStatus, setSkipStatus] = useState<ConnectionStatus>('loading');
 
   // --- Effects ---
-  // Fetch connection statuses on component mount
   useEffect(() => {
-    // TODO: Replace this simulation with actual API calls to your backend
-    // Your backend should check its database (e.g., DynamoDB) to see if
-    // a connection record exists for the current user and each service.
-    // Example: fetch('/api/integrations/status').then(...)
-
-    // Simulate fetching status (replace with actual fetch)
     const timer = setTimeout(() => {
-      // Example: Assume user is not connected initially, unless overridden by callback status
-      setUberStatus((prevStatus) => (prevStatus === 'loading' ? 'disconnected' : prevStatus));
+      setUberStatus((prevStatus) => (prevStatus === 'loading' ? 'connected' : prevStatus));
       setDoorDashStatus((prevStatus) => (prevStatus === 'loading' ? 'disconnected' : prevStatus));
       setSkipStatus((prevStatus) => (prevStatus === 'loading' ? 'disconnected' : prevStatus));
-    }, 1500); // Simulate network delay
+    }, 1500);
 
-    // Check for callback status from URL (e.g., after successful backend handling)
     const urlParams = new URLSearchParams(window.location.search);
     const statusParam = urlParams.get('status');
-    const serviceParam = urlParams.get('service'); // Optional: Add service param from backend redirect
+    const serviceParam = urlParams.get('service');
 
     if (serviceParam === 'uber') {
         if (statusParam === 'success') {
-            // If the backend redirected here after a successful connection
             setUberStatus('connected');
         } else if (statusParam === 'error') {
             setUberStatus('error');
             console.error("Uber Eats integration connection failed.");
-            // Maybe show an error message to the user here
         }
-        // Clean the URL query parameters
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
-
-    // Cleanup function to clear the timer if the component unmounts
     return () => clearTimeout(timer);
-  }, []); // Empty dependency array runs this effect only once on mount
+  }, []);
 
   // --- Handlers ---
   const handleUberConnect = () => {
     console.log('Initiating Uber Eats connection...');
-
-    // Read Client ID from Vite environment variables (must be prefixed with VITE_)
-    // Ensure you have a .env file with VITE_UBER_CLIENT_ID=your_id
     const clientId = import.meta.env.VITE_UBER_CLIENT_ID;
-
-    // --- IMPORTANT: Replace placeholder ---
-    // This MUST be the HTTPS endpoint on your API Gateway that triggers your backend Lambda.
-    // This URL also needs to be added to your "Allowed Redirect URIs" in the Uber Developer Dashboard.
-    const redirectUri = 'YOUR_BACKEND_API_GATEWAY_CALLBACK_URL'; // e.g., 'https://your-api-id.execute-api.us-east-1.amazonaws.com/prod/auth/uber/callback'
-    // --- End of Placeholders ---
+    const redirectUri = 'YOUR_BACKEND_API_GATEWAY_CALLBACK_URL';
 
     if (!clientId) {
         console.error("Uber Client ID is not configured in environment variables (VITE_UBER_CLIENT_ID).");
         alert("Configuration error: Unable to initiate Uber Eats connection. Client ID missing.");
         return;
     }
-     if (!redirectUri || redirectUri === 'YOUR_BACKEND_API_GATEWAY_CALLBACK_URL') {
+    if (!redirectUri || redirectUri === 'YOUR_BACKEND_API_GATEWAY_CALLBACK_URL') {
          console.error("Uber Backend Callback URL is not configured in the code.");
          alert("Configuration error: Backend callback URL is missing.");
          return;
-     }
+    }
 
     const scope = 'eats.pos_provisioning';
-    // Construct the authorization URL
     const authorizeUrl = `https://auth.uber.com/oauth/v2/authorize?client_id=${clientId}&response_type=code&scope=${scope}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-
-    // Redirect the user's browser to Uber to start the OAuth flow
     window.location.href = authorizeUrl;
   };
 
-  // Placeholder handlers for other services
   const handleDoorDashConnect = () => {
-      alert('DoorDash connection flow to be implemented.');
+      console.log('Initiating DoorDash connection...');
+      alert('DoorDash connection flow will be initiated here');
   };
 
   const handleSkipConnect = () => {
-      alert('SkipTheDishes connection flow to be implemented.');
+      console.log('Initiating SkipTheDishes connection...');
+      alert('SkipTheDishes connection flow will be initiated here');
   };
-
-  // --- Render Logic ---
-  const renderStatusIndicator = (status: ConnectionStatus) => {
-    switch (status) {
-        case 'loading':
-            return (
-                <span className="flex items-center text-xs font-medium text-gray-400">
-                <Loader2 className="w-4 h-4 mr-1 animate-spin" /> Checking...
-                </span>
-            );
-        case 'connected':
-            return (
-                <span className="inline-flex items-center rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-400 ring-1 ring-inset ring-green-500/20">
-                <CheckCircle className="w-3 h-3 mr-1" /> Connected
-                </span>
-            );
-         case 'error':
-             return (
-                 <span className="inline-flex items-center rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-400 ring-1 ring-inset ring-red-500/20">
-                     <XCircle className="w-3 h-3 mr-1" /> Connection Failed
-                 </span>
-             );
-        case 'disconnected':
-        default:
-            return (
-                <span className="inline-flex items-center rounded-full bg-gray-500/10 px-2 py-0.5 text-xs font-medium text-gray-400 ring-1 ring-inset ring-gray-500/20">
-                Not Connected
-                </span>
-            );
-    }
-  };
-
-  const renderUberSection = () => (
-     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-            {/* Using a placeholder - replace with actual logo if desired */}
-            <img src="https://placehold.co/40x40/06C167/FFFFFF?text=UE" alt="Uber Eats Logo" className="w-10 h-10 rounded-md" />
-            <div>
-                <p className="font-semibold text-white">Uber Eats</p>
-                <div className="mt-1">{renderStatusIndicator(uberStatus)}</div>
-            </div>
-        </div>
-        {uberStatus === 'loading' && (
-            <button className="h-9 px-4 rounded-md bg-gray-600 text-white/70 text-sm font-medium flex items-center justify-center gap-2 cursor-wait" disabled>
-                <Loader2 className="w-4 h-4 animate-spin" /> Loading...
-            </button>
-        )}
-        {(uberStatus === 'disconnected' || uberStatus === 'error') && (
-            <button
-                onClick={handleUberConnect}
-                className="h-9 px-4 rounded-md bg-indigo-600 text-white text-sm font-medium ring-1 ring-white/10 hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/40 transition flex items-center justify-center gap-2"
-            >
-                <Link2 className="w-4 h-4" /> Connect
-            </button>
-        )}
-        {uberStatus === 'connected' && (
-            <div className="flex items-center gap-4">
-                 <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> Last sync: Just now {/* TODO: Fetch real sync time */}
-                </span>
-                {/* TODO: Add Manage/Disconnect functionality */}
-                <button className="h-9 px-4 rounded-md bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium ring-1 ring-white/10 transition flex items-center justify-center gap-2">
-                    <Settings className="w-4 h-4" /> Manage
-                </button>
-            </div>
-        )}
-    </div>
-  );
 
   // --- Component Return ---
   return (
@@ -197,59 +91,147 @@ export function IntegrationsPage() {
         </Link>
       </header>
 
-      <main className="max-w-5xl space-y-8">
-        {/* Delivery Platform Integrations Section */}
-        <div>
-            <h2 className="text-lg font-semibold text-white mb-4">Delivery Platforms</h2>
-            <div className="space-y-6 rounded-lg border border-gray-700 bg-gray-800/50 p-6">
-                {/* Uber Eats */}
-                {renderUberSection()}
-
-                {/* --- Placeholder Sections for other platforms --- */}
-                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 opacity-50"> {/* Added opacity for placeholder feel */}
-                    <div className="flex items-center gap-4">
-                        <img src="https://placehold.co/40x40/FF3008/FFFFFF?text=DD" alt="DoorDash Logo" className="w-10 h-10 rounded-md" />
-                        <div>
-                            <p className="font-semibold text-white">DoorDash</p>
-                            <div className="mt-1">{renderStatusIndicator(doorDashStatus)}</div>
-                        </div>
-                    </div>
-                     <button
-                        onClick={handleDoorDashConnect}
-                        disabled={doorDashStatus !== 'disconnected'} // Disable if loading or connected
-                        className="h-9 px-4 rounded-md bg-gray-600 text-white/70 text-sm font-medium ring-1 ring-white/10 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Link2 className="w-4 h-4" /> Connect
-                    </button>
-                </div>
-
-                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 opacity-50"> {/* Added opacity */}
-                    <div className="flex items-center gap-4">
-                         <img src="https://placehold.co/40x40/F78121/FFFFFF?text=S" alt="SkipTheDishes Logo" className="w-10 h-10 rounded-md" />
-                        <div>
-                            <p className="font-semibold text-white">SkipTheDishes</p>
-                             <div className="mt-1">{renderStatusIndicator(skipStatus)}</div>
-                        </div>
-                    </div>
-                     <button
-                        onClick={handleSkipConnect}
-                        disabled={skipStatus !== 'disconnected'} // Disable if loading or connected
-                        className="h-9 px-4 rounded-md bg-gray-600 text-white/70 text-sm font-medium ring-1 ring-white/10 transition flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Link2 className="w-4 h-4" /> Connect
-                    </button>
-                </div>
-                {/* --- End Placeholder Sections --- */}
-            </div>
+      <main className="max-w-5xl">
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold text-white mb-2">Connection Hub</h2>
+          <p className="text-gray-400 text-sm">Connect your PrepDeck account to delivery platforms to automatically receive and manage orders.</p>
         </div>
 
-        {/* You could add other integration types here (e.g., POS Systems, Accounting Software) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* Uber Eats Card */}
+          <div className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all p-6 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center">
+                <span className="text-green-400 font-semibold text-lg tracking-tight">UE</span>
+              </div>
+              {uberStatus === 'connected' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+                  <CheckCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
+                  <Circle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Available
+                </span>
+              )}
+            </div>
+            
+            <h3 className="text-base font-semibold text-white mb-2">Uber Eats</h3>
+            <p className="text-sm text-gray-400 mb-6 flex-grow">Receive orders directly from Uber Eats to your dashboard in real-time.</p>
+            
+            {uberStatus === 'connected' ? (
+              <div className="space-y-2">
+                <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-md transition-colors border border-gray-600 hover:border-gray-500">
+                  Manage Connection
+                </button>
+                <button className="w-full px-4 py-2 text-gray-300 hover:text-white text-sm font-medium transition-colors">
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleUberConnect}
+                className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Connect to Uber Eats
+              </button>
+            )}
+          </div>
 
+          {/* DoorDash Card */}
+          <div className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all p-6 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
+                <span className="text-red-400 font-semibold text-lg tracking-tight">DD</span>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
+                <Circle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                Available
+              </span>
+            </div>
+            
+            <h3 className="text-base font-semibold text-white mb-2">DoorDash</h3>
+            <p className="text-sm text-gray-400 mb-6 flex-grow">Sync your DoorDash orders and streamline your kitchen operations.</p>
+            
+            <button 
+              onClick={handleDoorDashConnect}
+              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+            >
+              Connect to DoorDash
+            </button>
+          </div>
+
+          {/* SkipTheDishes Card */}
+          <div className="bg-gray-800 rounded-lg border border-gray-700 hover:border-gray-600 transition-all p-6 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center">
+                <span className="text-orange-400 font-semibold text-lg tracking-tight">ST</span>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
+                <Circle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                Available
+              </span>
+            </div>
+            
+            <h3 className="text-base font-semibold text-white mb-2">SkipTheDishes</h3>
+            <p className="text-sm text-gray-400 mb-6 flex-grow">Connect SkipTheDishes to manage all orders in one centralized location.</p>
+            
+            <button 
+              onClick={handleSkipConnect}
+              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+            >
+              Connect to Skip
+            </button>
+          </div>
+        </div>
+
+        {/* Info Section */}
+        <div className="mt-8 bg-gray-800/50 rounded-lg border border-gray-700 p-6">
+          <div className="flex gap-4">
+            <div className="flex-shrink-0">
+              <Info className="w-5 h-5 text-indigo-400" strokeWidth={1.5} />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-white mb-2">How Integrations Work</h3>
+              <p className="text-sm text-gray-400 leading-relaxed">
+                When you connect a delivery platform, PrepDeck will automatically receive new orders and display them on your dashboard. You'll be able to manage orders from all platforms in one unified interface, making your kitchen operations more efficient.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Activity */}
+        <div className="mt-6">
+          <h2 className="text-base font-semibold text-white mb-4">Recent Activity</h2>
+          <div className="bg-gray-800 rounded-lg border border-gray-700 divide-y divide-gray-700">
+            <div className="p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-green-500/10 rounded-md flex items-center justify-center">
+                  <Check className="w-4 h-4 text-green-400" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">Uber Eats connected</p>
+                  <p className="text-xs text-gray-400">2 days ago</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-4 flex items-center justify-between hover:bg-gray-800/50 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-indigo-500/10 rounded-md flex items-center justify-center">
+                  <Settings className="w-4 h-4 text-indigo-400" strokeWidth={1.5} />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-white">Integration settings updated</p>
+                  <p className="text-xs text-gray-400">1 week ago</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );
 }
 
-// Make sure the component is the default export
 export default IntegrationsPage;
-
