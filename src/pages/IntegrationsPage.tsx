@@ -57,7 +57,7 @@ export function IntegrationsPage() {
     const redirectUri = import.meta.env.VITE_UBER_REDIRECT_URI; 
 
     if (!clientId) {
-        console.error("Uber Client ID is not configured in environment variables (VITE_UBER_CLIENT_ID).");
+        console.error("*DEV*Uber Client ID is not configured in environment variables (VITE_UBER_CLIENT_ID).");
         alert("Configuration error: Unable to initiate Uber Eats connection. Client ID missing.");
         return;
     }
