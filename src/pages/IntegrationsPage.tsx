@@ -145,21 +145,39 @@ export function IntegrationsPage() {
               <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center">
                 <span className="text-red-400 font-semibold text-lg tracking-tight">DD</span>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
-                <Circle className="w-3.5 h-3.5" strokeWidth={1.5} />
-                Available
-              </span>
+              {doorDashStatus === 'connected' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+                  <CheckCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
+                  <Circle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Available
+                </span>
+              )}
             </div>
             
             <h3 className="text-base font-semibold text-white mb-2">DoorDash</h3>
             <p className="text-sm text-gray-400 mb-6 flex-grow">Sync your DoorDash orders and streamline your kitchen operations.</p>
             
-            <button 
-              onClick={handleDoorDashConnect}
-              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
-            >
-              Connect to DoorDash
-            </button>
+            {doorDashStatus === 'connected' ? (
+              <div className="space-y-2">
+                <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-md transition-colors border border-gray-600 hover:border-gray-500">
+                  Manage Connection
+                </button>
+                <button className="w-full px-4 py-2 text-gray-300 hover:text-white text-sm font-medium transition-colors">
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleDoorDashConnect}
+                className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Connect to DoorDash
+              </button>
+            )}
           </div>
 
           {/* SkipTheDishes Card */}
@@ -168,21 +186,39 @@ export function IntegrationsPage() {
               <div className="w-12 h-12 bg-orange-500/10 rounded-lg flex items-center justify-center">
                 <span className="text-orange-400 font-semibold text-lg tracking-tight">ST</span>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
-                <Circle className="w-3.5 h-3.5" strokeWidth={1.5} />
-                Available
-              </span>
+              {skipStatus === 'connected' ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-green-500/10 text-green-400 border border-green-500/20">
+                  <CheckCircle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Connected
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-700 text-gray-400 border border-gray-600">
+                  <Circle className="w-3.5 h-3.5" strokeWidth={1.5} />
+                  Available
+                </span>
+              )}
             </div>
             
             <h3 className="text-base font-semibold text-white mb-2">SkipTheDishes</h3>
             <p className="text-sm text-gray-400 mb-6 flex-grow">Connect SkipTheDishes to manage all orders in one centralized location.</p>
             
-            <button 
-              onClick={handleSkipConnect}
-              className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
-            >
-              Connect to Skip
-            </button>
+            {skipStatus === 'connected' ? (
+              <div className="space-y-2">
+                <button className="w-full px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white text-sm font-medium rounded-md transition-colors border border-gray-600 hover:border-gray-500">
+                  Manage Connection
+                </button>
+                <button className="w-full px-4 py-2 text-gray-300 hover:text-white text-sm font-medium transition-colors">
+                  Disconnect
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={handleSkipConnect}
+                className="w-full px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-medium rounded-md transition-colors"
+              >
+                Connect to Skip
+              </button>
+            )}
           </div>
         </div>
 
