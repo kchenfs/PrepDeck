@@ -24,16 +24,22 @@ resource "aws_apigatewayv2_api" "webhook_api" {
 # API GATEWAY DEPLOYMENT
 # ------------------------------------------------------------------------------
 resource "aws_apigatewayv2_deployment" "webhook_deployment" {
-  api_id = aws_apigatewayv2_api.webhook_api.id
+  api_id = aws_apigatewayv2_api.webhook_api.id 
 
   lifecycle {
     create_before_destroy = true
   }
 
+  # 👇 MODIFICATION: Add your new integration and route to the triggers
   triggers = {
     redeployment = sha1(jsonencode([
+      # Existing resources
       aws_apigatewayv2_integration.webhook_ingestor_integration.id,
       aws_apigatewayv2_route.webhook_post.id,
+
+      # ADDED: New resources for OAuth
+      aws_apigatewayv2_integration.uber_oauth_callback_integration.id,
+      aws_apigatewayv2_route.uber_oauth_callback_get.id
     ]))
   }
 }
@@ -97,9 +103,49 @@ resource "aws_lambda_permission" "api_gateway_invoke" {
 
 
 # ------------------------------------------------------------------------------
+# 👇 ADD THIS SECTION: LAMBDA INTEGRATION & ROUTE FOR UBER OAUTH CALLBACK
+# ------------------------------------------------------------------------------
+
+# 1. Create the integration to link the API to your OAuth Lambda
+resource "aws_apigatewayv2_integration" "uber_oauth_callback_integration" {
+  api_id           = aws_apigatewayv2_api.webhook_api.id
+  integration_type = "AWS_PROXY"
+  
+  # This points to the OAuth lambda you defined in lambda.tf 
+  integration_uri  = aws_lambda_function.uber_oauth_callback_lambda.invoke_arn
+}
+
+# 2. Create the GET route that Uber will redirect the user to
+resource "aws_apigatewayv2_route" "uber_oauth_callback_get" {
+  api_id    = aws_apigatewayv2_api.webhook_api.id
+  route_key = "GET /auth/uber/callback"
+  target    = "integrations/${aws_apigatewayv2_integration.uber_oauth_callback_integration.id}"
+}
+
+# 3. Give API Gateway permission to invoke this specific Lambda
+resource "aws_lambda_permission" "api_gateway_invoke_oauth_callback" {
+  statement_id  = "AllowAPIGatewayInvokeOAuthCallback"
+  action        = "lambda:InvokeFunction"
+  
+  # This points to the OAuth lambda from lambda.tf 
+  function_name = aws_lambda_function.uber_oauth_callback_lambda.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  # This ARN must match your API and the new route
+  source_arn    = "${aws_apigatewayv2_api.webhook_api.execution_arn}/*/*/auth/uber/callback"
+}
+
+
+# ------------------------------------------------------------------------------
 # OUTPUT
 # ------------------------------------------------------------------------------
 output "webhook_api_endpoint" {
   description = "The base URL for the webhook API endpoint."
   value       = aws_apigatewayv2_api.webhook_api.api_endpoint
+}
+
+# 4. ADD THIS OUTPUT: This is the full URL you need for your Uber app
+output "uber_oauth_callback_url" {
+  description = "The full URL to use as the Redirect URI in the Uber Dev Dashboard."
+  value       = "${aws_apigatewayv2_api.webhook_api.api_endpoint}/auth/uber/callback"
 }
