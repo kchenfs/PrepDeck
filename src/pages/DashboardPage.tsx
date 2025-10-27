@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { KanbanColumn } from '../components/dashboard/KanbanColumn';
 import type { Order } from '../types';
-import { Inbox, ChefHat, LayoutDashboard, History } from 'lucide-react';
+import { Inbox, ChefHat, LayoutDashboard, History, Plug } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Import the new client generator and types from aws-amplify/api
@@ -88,7 +88,11 @@ export function DashboardPage() {
             <h1 className="text-3xl font-bold text-white">BOH Dashboard</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4">
-             <Link to="/history" className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+            <Link to="/integrations" className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
+                <Plug className="w-5 h-5" />
+                Integrations
+            </Link>
+            <Link to="/history" className="flex items-center gap-2 text-sm font-medium text-gray-300 hover:text-white transition-colors">
                 <History className="w-5 h-5" />
                 Order History
             </Link>
