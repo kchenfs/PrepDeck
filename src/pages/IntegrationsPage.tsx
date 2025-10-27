@@ -1,7 +1,7 @@
 // src/pages/IntegrationsPage.tsx
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Auth } from 'aws-amplify';
+import { fetchAuthSession } from 'aws-amplify/auth';
 import {
   Plug,
   LayoutDashboard,
@@ -53,15 +53,17 @@ export function IntegrationsPage() {
     console.log('Initiating Uber Eats connection...');
     
     try {
-      // Get the current authenticated user
-      const currentUser = await Auth.currentAuthenticatedUser();
-      const userId = currentUser.attributes.sub;
+      // Get the current authenticated session (Amplify v6 style)
+      const session = await fetchAuthSession();
+      const userId = session.tokens?.idToken?.payload?.sub as string;
       
       if (!userId) {
         console.error("Unable to retrieve user ID from authentication.");
         alert("Authentication error: Unable to retrieve user information.");
         return;
       }
+
+      console.log("Retrieved user ID:", userId);
 
       const clientId = import.meta.env.VITE_UBER_CLIENT_ID;
       const redirectUri = import.meta.env.VITE_UBER_REDIRECT_URI; 
@@ -81,6 +83,8 @@ export function IntegrationsPage() {
       const scope = 'eats.pos_provisioning';
       // Pass the user ID as the state parameter
       const authorizeUrl = `https://auth.uber.com/oauth/v2/authorize?client_id=${clientId}&response_type=code&scope=${scope}&redirect_uri=${encodeURIComponent(redirectUri)}&state=${encodeURIComponent(userId)}`;
+      
+      console.log("Redirecting to Uber authorization URL...");
       window.location.href = authorizeUrl;
     } catch (error) {
       console.error("Error initiating Uber Eats connection:", error);
