@@ -56,8 +56,8 @@ jobs:
             --function-name OrderProcessor \
             --zip-file fileb://deployment_package.zip
 
-        - name: Deploy Uber connector Lambda Code
-          run: |
-            aws lambda update-function-code \
-              --function-name prepdeck-dev-uber-oauth-callback \
-              --zip-file fileb://deployment_package.zip
+      - name: Deploy Uber connector Lambda Code
+        run: |
+          aws lambda update-function-code \
+            --function-name prepdeck-dev-uber-oauth-callback \
+            --zip-file fileb://deployment_package.zip
