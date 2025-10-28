@@ -55,7 +55,7 @@ def get_uber_eats_token():
         'client_id': client_id,
         'client_secret': client_secret,
         'grant_type': 'client_credentials',
-        'scope': 'eats.order eats.store' 
+        'scope': 'eats.order eats.store eats.store.orders.read' 
     }
     
     response = requests.post(auth_url, data=auth_payload)
@@ -77,6 +77,35 @@ def get_uber_eats_token():
     )
     
     return access_token
+
+def accept_uber_eats_order(order_id, auth_token, ready_for_pickup_time=None, external_reference_id=None, accepted_by=None):
+    accept_url = f"https://api.uber.com/v1/delivery/order/{order_id}/accept"
+    
+    payload = {}
+    if ready_for_pickup_time:
+        payload["ready_for_pickup_time"] = ready_for_pickup_time
+    if external_reference_id:
+        payload["external_reference_id"] = external_reference_id
+    if accepted_by:
+        payload["accepted_by"] = accepted_by
+    
+    try:
+        print(f"Attempting to accept order {order_id}...")
+        response = requests.post(accept_url, headers=headers, data=json.dumps(payload))
+        response.raise_for_status() # Will raise an error for 4xx/5xx responses
+        print(f"Successfully accepted order {order_id}.")
+        return response.json()
+    except requests.exceptions.HTTPError as http_err:
+        # It's possible the order is in a state that can't be accepted (e.g., canceled)
+        # Log the error but don't stop the lambda from processing others.
+        print(f"HTTP error accepting order {order_id}: {http_err}. Response: {response.text}")
+    except Exception as e:
+        print(f"Generic error accepting order {order_id}: {e}")
+        
+    return None
+
+
+
 
 def push_order_to_appsync(order_data):
     """
