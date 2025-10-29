@@ -169,6 +169,7 @@ def handler(event, context):
             
             print("Successfully fetched order details.")
             
+            print("Order Details:", json.dumps(order_details))
             # Step 3: Enrich the order with data from the Menu table
             back_of_house_items = []
             
