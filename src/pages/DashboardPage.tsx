@@ -8,18 +8,27 @@ import { Link } from 'react-router-dom';
 // Import the new client generator and types from aws-amplify/api
 import { generateClient, type GraphQLSubscription } from 'aws-amplify/api';
 
+// FIXED: Query the actual fields in your Order type, not a non-existent 'order' field
 const onNewOrderSubscription = /* GraphQL */ `
   subscription OnNewOrder {
     onNewOrder {
-      order
+      OrderID
+      DisplayID
+      State
+      Items
+      SpecialInstructions
     }
   }
 `;
 
-// Helper type for the subscription data
+// Helper type for the subscription data - matches your actual schema
 type NewOrderSubscription = {
   onNewOrder: {
-    order: string;
+    OrderID: string;
+    DisplayID: string;
+    State: string;
+    Items: string; // This is AWSJSON, so it comes as a string
+    SpecialInstructions: string;
   };
 };
 
@@ -37,29 +46,40 @@ export function DashboardPage() {
     }).subscribe({
       next: ({ data }) => {
         try {
-            console.log("Received new order data string:", data.onNewOrder.order);
+            console.log("Received new order from AppSync:", data.onNewOrder);
             
-            const newOrderData = JSON.parse(data.onNewOrder.order);
+            const orderData = data.onNewOrder;
+            
+            // Parse the Items JSON string
+            const items = JSON.parse(orderData.Items);
+            console.log("Parsed items:", items);
             
             const newOrder: Order = {
-                id: newOrderData.OrderID,
-                displayId: newOrderData.DisplayID,
+                id: orderData.OrderID,
+                displayId: orderData.DisplayID,
                 service: 'UberEats',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                items: newOrderData.Items.map((item: any) => ({
+                items: items.map((item: any) => ({
                     name: item.Title,
-                    quantity: item.Quantity
+                    quantity: item.Quantity,
+                    // You can also include modifiers if your Order type supports it
+                    modifiers: item.Modifiers?.map((mod: any) => ({
+                        name: mod.Title,
+                        quantity: mod.Quantity
+                    }))
                 })),
                 state: 'queue',
                 isUrgent: false,
+                specialInstructions: orderData.SpecialInstructions
             };
 
+            console.log("Processed order:", newOrder);
             setOrders((prevOrders) => [...prevOrders, newOrder]);
         } catch (error) {
             console.error("Error processing subscription message:", error);
         }
       },
-      error: (error) => console.warn(error)
+      error: (error) => console.error("Subscription error:", error)
     });
 
     return () => {
