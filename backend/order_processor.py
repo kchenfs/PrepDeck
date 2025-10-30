@@ -193,7 +193,6 @@ def handler(event, context):
             order_response.raise_for_status()
             order_details = order_response.json()
             
-            # --- FIX 2: PRINT THE FULL ORDER DETAILS FOR DEBUGGING ---
             print(f"Full order details fetched: {json.dumps(order_details)}")
             
             # Step 4: Apply business logic - Enrich and filter for back-of-house items
@@ -220,14 +219,20 @@ def handler(event, context):
                                 'Title': menu_item.get('name_mandarin', menu_item.get('ItemName', item.get('title'))),
                                 'InternalSKU': menu_item.get('ItemID'),
                                 'Quantity': item.get('quantity', 1),
-                                'SpecialInstructions': item.get('special_instructions', ''),
+                                # Special instructions are per-item in some payloads,
+                                # but at cart level in yours. We'll add cart-level instructions later.
+                                'SpecialInstructions': item.get('special_instructions', ''), 
                                 'Modifiers': [] # This will hold ALL modifiers
                             }
 
                             # --- Process ALL Modifiers ---
                             if item.get('selected_modifier_groups'):
                                 for group in item.get('selected_modifier_groups'):
-                                    for modifier in group.get('selected_modifiers', []):
+                                    
+                                    # ===== THIS IS THE FIX =====
+                                    # The key in the Uber payload is "selected_items", not "selected_modifiers"
+                                    for modifier in group.get('selected_items', []): 
+                                    # ===========================
                                         
                                         # Query the GSI for the MODIFIER item
                                         modifier_response = menu_table.query(
@@ -256,11 +261,16 @@ def handler(event, context):
             if back_of_house_items:
                 print(f"Found {len(back_of_house_items)} back-of-house items for order {order_id}.")
                 
+                # ===== THIS IS THE SECOND FIX =====
+                # Get special instructions from the cart level
+                cart_special_instructions = cart.get('special_instructions', '')
+                
                 filtered_order = {
                     'OrderID': order_details.get('id'),
                     'DisplayID': order_details.get('display_id'),
                     'State': order_details.get('current_state'), 
-                    'Items': back_of_house_items
+                    'Items': back_of_house_items,
+                    'SpecialInstructions': cart_special_instructions # Add instructions here
                 }
                 
                 # Save the filtered order to our Orders table
