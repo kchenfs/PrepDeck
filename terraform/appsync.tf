@@ -17,6 +17,13 @@ resource "aws_appsync_graphql_api" "orders_api" {
     authentication_type = "AWS_IAM"
   }
 
+  # Enable CloudWatch Logs for AppSync
+  log_config {
+    cloudwatch_logs_role_arn = aws_iam_role.appsync_logs_role.arn
+    field_log_level          = "ALL"  # Options: NONE, ERROR, ALL
+    exclude_verbose_content  = false
+  }
+
   # THE SCHEMA WITH IAM AUTH DIRECTIVE
   schema = <<EOF
 type Order {
@@ -71,9 +78,20 @@ resource "aws_appsync_resolver" "new_order_resolver" {
   field       = "newOrder"
   data_source = aws_appsync_datasource.none_datasource.name
 
-  # Just pass through - let AppSync handle the JSON parsing
-  request_template  = "{}"
-  response_template = "$util.toJson($util.parseJson($context.arguments.order))"
+  # For NONE data source, we need to return the proper structure
+  request_template  = <<EOF
+{
+  "version": "2018-05-29",
+  "payload": {}
+}
+EOF
+
+  # Parse the JSON string argument and return it as the Order object
+  # This both sends to subscribers AND returns to Lambda
+  response_template = <<EOF
+#set($order = $util.parseJson($context.arguments.order))
+$util.toJson($order)
+EOF
 }
 
 # Resolver for the placeholder Query
@@ -98,4 +116,29 @@ output "appsync_graphql_api_url" {
 output "appsync_graphql_api_id" {
   description = "The ID of the AppSync GraphQL API."
   value       = aws_appsync_graphql_api.orders_api.id
+}
+
+# ------------------------------------------------------------------------------
+# IAM ROLE FOR APPSYNC CLOUDWATCH LOGS
+# ------------------------------------------------------------------------------
+resource "aws_iam_role" "appsync_logs_role" {
+  name = "MomotaroAppSyncLogsRole"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "appsync.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "appsync_logs_policy" {
+  role       = aws_iam_role.appsync_logs_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSAppSyncPushToCloudWatchLogs"
 }

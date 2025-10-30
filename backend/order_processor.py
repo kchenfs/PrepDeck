@@ -6,7 +6,7 @@ import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from datetime import datetime
-from boto3.dynamodb.conditions import Key # <--- FIX 1: ADDED THIS IMPORT
+from boto3.dynamodb.conditions import Key
 
 # Initialize AWS clients
 ssm = boto3.client('ssm')
@@ -118,8 +118,11 @@ def accept_uber_eats_order(order_id, auth_token, ready_for_pickup_time=None, ext
 def push_order_to_appsync(order_data):
     """
     Signs and sends a GraphQL mutation to the AppSync API.
+    Returns the response data for logging.
     """
-    print(f"Pushing filtered order to AppSync: {json.dumps(order_data)}")
+    print(f"=== APPSYNC PUSH START ===")
+    print(f"Pushing filtered order to AppSync:")
+    print(json.dumps(order_data, indent=2))
     
     mutation = """
         mutation NewOrder($order: AWSJSON!) {
@@ -127,6 +130,8 @@ def push_order_to_appsync(order_data):
                 OrderID
                 DisplayID
                 State
+                Items
+                SpecialInstructions
             }
         }
     """
@@ -134,9 +139,12 @@ def push_order_to_appsync(order_data):
     payload = {
         "query": mutation,
         "variables": {
-            "order": json.dumps(order_data) # Send the order_data as a JSON string
+            "order": json.dumps(order_data)
         }
     }
+
+    print(f"GraphQL Payload being sent:")
+    print(json.dumps(payload, indent=2))
 
     request = AWSRequest(
         method="POST",
@@ -146,11 +154,32 @@ def push_order_to_appsync(order_data):
     )
     SigV4Auth(credentials, "appsync", AWS_REGION).add_auth(request)
 
+    print(f"Signed request headers: {dict(request.headers)}")
+
     response = requests.post(APPSYNC_API_URL, headers=dict(request.headers), data=request.data)
+    
+    print(f"AppSync Response Status: {response.status_code}")
+    print(f"AppSync Response Body:")
+    print(json.dumps(response.json(), indent=2))
+    
     response.raise_for_status()
     
-    print("Successfully pushed order to AppSync.")
-    print(response.json())
+    response_data = response.json()
+    
+    # Check if there were any errors
+    if 'errors' in response_data:
+        print(f"⚠️  AppSync returned errors: {response_data['errors']}")
+    
+    # Check if data was successfully sent
+    if 'data' in response_data and response_data['data'].get('newOrder'):
+        print(f"✅ Successfully pushed order to AppSync!")
+        print(f"Returned Order Data: {json.dumps(response_data['data']['newOrder'], indent=2)}")
+    else:
+        print(f"⚠️  AppSync mutation returned None - check resolver configuration")
+    
+    print(f"=== APPSYNC PUSH END ===")
+    
+    return response_data
 
 
 def handler(event, context):
@@ -219,21 +248,14 @@ def handler(event, context):
                                 'Title': menu_item.get('name_mandarin', menu_item.get('ItemName', item.get('title'))),
                                 'InternalSKU': menu_item.get('ItemID'),
                                 'Quantity': item.get('quantity', 1),
-                                # Special instructions are per-item in some payloads,
-                                # but at cart level in yours. We'll add cart-level instructions later.
                                 'SpecialInstructions': item.get('special_instructions', ''), 
-                                'Modifiers': [] # This will hold ALL modifiers
+                                'Modifiers': []
                             }
 
                             # --- Process ALL Modifiers ---
                             if item.get('selected_modifier_groups'):
                                 for group in item.get('selected_modifier_groups'):
-                                    
-                                    # ===== THIS IS THE FIX =====
-                                    # The key in the Uber payload is "selected_items", not "selected_modifiers"
                                     for modifier in group.get('selected_items', []): 
-                                    # ===========================
-                                        
                                         # Query the GSI for the MODIFIER item
                                         modifier_response = menu_table.query(
                                             IndexName='UberEatsID-index', 
@@ -261,8 +283,6 @@ def handler(event, context):
             if back_of_house_items:
                 print(f"Found {len(back_of_house_items)} back-of-house items for order {order_id}.")
                 
-                # ===== THIS IS THE SECOND FIX =====
-                # Get special instructions from the cart level
                 cart_special_instructions = cart.get('special_instructions', '')
                 
                 filtered_order = {
@@ -270,7 +290,7 @@ def handler(event, context):
                     'DisplayID': order_details.get('display_id'),
                     'State': order_details.get('current_state'), 
                     'Items': back_of_house_items,
-                    'SpecialInstructions': cart_special_instructions # Add instructions here
+                    'SpecialInstructions': cart_special_instructions
                 }
                 
                 # Save the filtered order to our Orders table
@@ -279,7 +299,7 @@ def handler(event, context):
                 
                 # Push to AppSync for real-time frontend updates
                 print("Step 5: Pushing to AppSync...")
-                push_order_to_appsync(filtered_order)
+                appsync_response = push_order_to_appsync(filtered_order)
                 
                 print(f"Order {order_id} processing complete.")
             else:
@@ -287,6 +307,8 @@ def handler(event, context):
 
         except Exception as e:
             print(f"Failed to process order {order_href}. Error: {e}")
+            import traceback
+            print(traceback.format_exc())
             raise e
             
     return {'status': 'success'}
