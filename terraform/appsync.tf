@@ -1,4 +1,3 @@
-
 # ------------------------------------------------------------------------------
 # APPSYNC GRAPHQL API
 # This is the real-time layer that will push new orders to the frontend.
@@ -9,7 +8,7 @@ resource "aws_appsync_graphql_api" "orders_api" {
 
   # Link AppSync to your existing Cognito User Pool for security
   user_pool_config {
-    aws_region     = data.aws_region.current.id # Use .id instead of .name to avoid deprecation warning
+    aws_region     = data.aws_region.current.id
     user_pool_id   = aws_cognito_user_pool.user_pool.id
     default_action = "ALLOW"
   }
@@ -18,36 +17,31 @@ resource "aws_appsync_graphql_api" "orders_api" {
     authentication_type = "AWS_IAM"
   }
 
-  # THE SCHEMA IS NOW DEFINED DIRECTLY INSIDE THIS RESOURCE
+  # THE SCHEMA WITH IAM AUTH DIRECTIVE
   schema = <<EOF
 type Order {
     OrderID: ID!
     DisplayID: String
     State: String
     Items: AWSJSON
-    SpecialInstructions: String # <-- ADD THIS FIELD
-    # Add other relevant order fields that you want to display on the dashboard
+    SpecialInstructions: String
 }
 
-# THIS IS THE FIX: Add a placeholder Query type to satisfy the schema requirements.
 type Query {
-    # This query doesn't need to do anything, it just needs to exist.
     get_status: String
 }
 
 type Mutation {
-    # This is the mutation our OrderProcessor Lambda will call.
-    newOrder(order: AWSJSON): Order
+    # Add @aws_iam directive to allow IAM authentication for this mutation
+    newOrder(order: AWSJSON): Order @aws_iam
 }
 
 type Subscription {
-    # This is the subscription our React frontend will listen to.
     onNewOrder: Order
         @aws_subscribe(mutations: ["newOrder"])
 }
 
 schema {
-    # Add the query type to the schema definition.
     query: Query
     mutation: Mutation
     subscription: Subscription
@@ -77,8 +71,9 @@ resource "aws_appsync_resolver" "new_order_resolver" {
   field       = "newOrder"
   data_source = aws_appsync_datasource.none_datasource.name
 
-  request_template  = "{ \"payload\": $context.arguments.order }"
-  response_template = "$context.result"
+  # Just pass through - let AppSync handle the JSON parsing
+  request_template  = "{}"
+  response_template = "$util.toJson($util.parseJson($context.arguments.order))"
 }
 
 # Resolver for the placeholder Query
@@ -88,15 +83,12 @@ resource "aws_appsync_resolver" "get_status_resolver" {
   field       = "get_status"
   data_source = aws_appsync_datasource.none_datasource.name
 
-  # This resolver simply returns a static string.
   request_template  = "{}"
   response_template = "$util.toJson(\"ok\")"
 }
 
-
 # ------------------------------------------------------------------------------
 # OUTPUTS
-# These will be needed for your frontend configuration.
 # ------------------------------------------------------------------------------
 output "appsync_graphql_api_url" {
   description = "The URL for the AppSync GraphQL API."
@@ -107,4 +99,3 @@ output "appsync_graphql_api_id" {
   description = "The ID of the AppSync GraphQL API."
   value       = aws_appsync_graphql_api.orders_api.id
 }
-
