@@ -6,6 +6,7 @@ import requests
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from datetime import datetime
+from boto3.dynamodb.conditions import Key # <--- FIX 1: ADDED THIS IMPORT
 
 # Initialize AWS clients
 ssm = boto3.client('ssm')
@@ -90,7 +91,7 @@ def accept_uber_eats_order(order_id, auth_token, ready_for_pickup_time=None, ext
     if external_reference_id:
         payload["external_reference_id"] = external_reference_id
     if accepted_by:
-        payload["accepted_by"] = accepted_by
+        payload["accepted__by"] = accepted_by
     
     headers = {
         'Authorization': f'Bearer {auth_token}',
@@ -133,7 +134,7 @@ def push_order_to_appsync(order_data):
     payload = {
         "query": mutation,
         "variables": {
-            "order": json.dumps(order_data)
+            "order": json.dumps(order_data) # Send the order_data as a JSON string
         }
     }
 
@@ -192,7 +193,8 @@ def handler(event, context):
             order_response.raise_for_status()
             order_details = order_response.json()
             
-            print("Successfully fetched order details.")
+            # --- FIX 2: PRINT THE FULL ORDER DETAILS FOR DEBUGGING ---
+            print(f"Full order details fetched: {json.dumps(order_details)}")
             
             # Step 4: Apply business logic - Enrich and filter for back-of-house items
             print("Step 4: Filtering for back-of-house items...")
@@ -203,8 +205,8 @@ def handler(event, context):
                 for item in cart.get("items", []):
                     # Query the GSI for the MAIN item
                     response = menu_table.query(
-                        IndexName='UberEatsID-index', # Your GSI name
-                        KeyConditionExpression=boto3.dynamodb.conditions.Key('UberEatsID').eq(item.get('id'))
+                        IndexName='UberEatsID-index', 
+                        KeyConditionExpression=Key('UberEatsID').eq(item.get('id'))
                     )
                     
                     if response['Items']:
@@ -229,8 +231,8 @@ def handler(event, context):
                                         
                                         # Query the GSI for the MODIFIER item
                                         modifier_response = menu_table.query(
-                                            IndexName='UberEatsID-index', # Your GSI name
-                                            KeyConditionExpression=boto3.dynamodb.conditions.Key('UberEatsID').eq(modifier.get('id'))
+                                            IndexName='UberEatsID-index', 
+                                            KeyConditionExpression=Key('UberEatsID').eq(modifier.get('id'))
                                         )
                                         
                                         if modifier_response['Items']:

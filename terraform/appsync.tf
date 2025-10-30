@@ -20,6 +20,7 @@ type Order {
     OrderID: ID!
     DisplayID: String
     State: String
+    Items: AWSJSON
     # Add other relevant order fields that you want to display on the dashboard
 }
 

@@ -150,7 +150,8 @@ resource "aws_iam_policy" "order_processor_policy" {
       {
         Action   = "appsync:GraphQL"
         Effect   = "Allow"
-        Resource = aws_appsync_graphql_api.orders_api.arn
+        # Add "/*" to the end to allow access to all operations (mutations, queries)
+        Resource = "${aws_appsync_graphql_api.orders_api.arn}/*"
       },
       {
         Action   = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
