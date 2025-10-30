@@ -158,7 +158,7 @@ def handler(event, context):
     1. Get auth token (from cache or Uber)
     2. Accept the order immediately
     3. Fetch full order details
-    4. Apply business logic (filter back-of-house items)
+    4. Apply business logic (filter back-of-house items, including modifiers)
     5. Push to frontend via AppSync if applicable
     """
     print(f"Received event: {json.dumps(event)}")
@@ -171,12 +171,11 @@ def handler(event, context):
             print("No resource_href found in payload. Skipping.")
             continue
             
-        # Extract order ID from the resource_href for the accept call
-        # Assuming format: https://api.uber.com/v1/eats/order/{order_id}
+        # Extract order ID from the resource_href
         order_id = order_href.split('/')[-1]
         
         try:
-            # Step 1: Get authentication token (from cache or fresh)
+            # Step 1: Get authentication token
             print("Step 1: Getting authentication token...")
             auth_token = get_uber_eats_token()
             
@@ -194,31 +193,62 @@ def handler(event, context):
             order_details = order_response.json()
             
             print("Successfully fetched order details.")
-            print(f"Order Details: {json.dumps(order_details, indent=2)}")
             
             # Step 4: Apply business logic - Enrich and filter for back-of-house items
             print("Step 4: Filtering for back-of-house items...")
             back_of_house_items = []
             
-            # Get the cart from the order (note: it's "cart" singular, not "carts")
             cart = order_details.get("cart", {})
             if cart:
                 for item in cart.get("items", []):
-                    # Query the GSI to find our internal menu item by the Uber Eats ID
+                    # Query the GSI for the MAIN item
                     response = menu_table.query(
-                        IndexName='UberEatsID-index',
+                        IndexName='UberEatsID-index', # Your GSI name
                         KeyConditionExpression=boto3.dynamodb.conditions.Key('UberEatsID').eq(item.get('id'))
                     )
                     
                     if response['Items']:
                         menu_item = response['Items'][0]
+                        
                         # Check if the item's location is 'back' or 'both'
                         if menu_item.get('Location') in ['back', 'both']:
-                            back_of_house_items.append({
-                                'Title': menu_item.get('NameMandarin', item.get('title')),
-                                'Quantity': item.get('quantity', {}).get('default_quantity', {}).get('amount', 1),
-                                'SpecialInstructions': item.get('customer_request', {}).get('special_instructions', '')
-                            })
+                            
+                            # Build the main item object
+                            processed_item = {
+                                'Title': menu_item.get('name_mandarin', menu_item.get('ItemName', item.get('title'))),
+                                'InternalSKU': menu_item.get('ItemID'),
+                                'Quantity': item.get('quantity', 1), # Fixed JSON path
+                                'SpecialInstructions': item.get('special_instructions', ''), # Fixed JSON path
+                                'Modifiers': []
+                            }
+
+                            # --- NEW: Process Modifiers ---
+                            if item.get('selected_modifier_groups'):
+                                for group in item.get('selected_modifier_groups'):
+                                    for modifier in group.get('selected_modifiers', []):
+                                        
+                                        # Query the GSI for the MODIFIER item
+                                        modifier_response = menu_table.query(
+                                            IndexName='UberEatsID-index', # Your GSI name
+                                            KeyConditionExpression=boto3.dynamodb.conditions.Key('UberEatsID').eq(modifier.get('id'))
+                                        )
+                                        
+                                        if modifier_response['Items']:
+                                            modifier_item_details = modifier_response['Items'][0]
+                                            
+                                            processed_item['Modifiers'].append({
+                                                'Title': modifier_item_details.get('name_mandarin', modifier_item_details.get('ItemName', modifier.get('title'))),
+                                                'InternalSKU': modifier_item_details.get('ItemID'),
+                                                'Quantity': modifier.get('quantity', 1),
+                                                'Price': modifier_item_details.get('PriceModifier', 0)
+                                            })
+                                        else:
+                                            print(f"Warning: Modifier item {modifier.get('id')} not found in menu_table.")
+                            
+                            back_of_house_items.append(processed_item)
+                            
+                    else:
+                        print(f"Warning: Main item {item.get('id')} not found in menu_table.")
 
             # Step 5: If back-of-house items found, save and push to frontend
             if back_of_house_items:
@@ -227,11 +257,11 @@ def handler(event, context):
                 filtered_order = {
                     'OrderID': order_details.get('id'),
                     'DisplayID': order_details.get('display_id'),
-                    'State': order_details.get('state'),
+                    'State': order_details.get('current_state'), # Use 'current_state' from payload
                     'Items': back_of_house_items
                 }
                 
-                # Save the filtered order to our Orders table for tracking/history
+                # Save the filtered order to our Orders table
                 print("Saving filtered order to DynamoDB...")
                 orders_table.put_item(Item=filtered_order)
                 
@@ -245,7 +275,6 @@ def handler(event, context):
 
         except Exception as e:
             print(f"Failed to process order {order_href}. Error: {e}")
-            # Note: We're raising the exception so SQS will retry if needed
             raise e
             
     return {'status': 'success'}
