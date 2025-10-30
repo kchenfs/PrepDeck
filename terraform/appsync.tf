@@ -14,6 +14,10 @@ resource "aws_appsync_graphql_api" "orders_api" {
     default_action = "ALLOW"
   }
 
+  additional_authentication_provider {
+    authentication_type = "AWS_IAM"
+  }
+
   # THE SCHEMA IS NOW DEFINED DIRECTLY INSIDE THIS RESOURCE
   schema = <<EOF
 type Order {
@@ -21,6 +25,7 @@ type Order {
     DisplayID: String
     State: String
     Items: AWSJSON
+    SpecialInstructions: String # <-- ADD THIS FIELD
     # Add other relevant order fields that you want to display on the dashboard
 }
 
