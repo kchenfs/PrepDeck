@@ -134,8 +134,7 @@ def push_order_to_appsync(order_data):
     payload = {
         "query": mutation,
         "variables": {
-            # "order": json.dumps(order_data) # <-- REMOVE THIS LINE
-            "order": order_data               # <-- ADD THIS LINE
+            "order": json.dumps(order_data) # Send the order_data as a JSON string
         }
     }
 

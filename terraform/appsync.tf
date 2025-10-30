@@ -77,8 +77,8 @@ resource "aws_appsync_resolver" "new_order_resolver" {
   field       = "newOrder"
   data_source = aws_appsync_datasource.none_datasource.name
 
-  request_template  = "{ \"payload\": $util.toJson($context.arguments.order) }" # <-- ADD THIS LINE
-  response_template = "$util.toJson($context.result)"
+  request_template  = "{ \"payload\": $context.arguments.order }"
+  response_template = "$context.result"
 }
 
 # Resolver for the placeholder Query
