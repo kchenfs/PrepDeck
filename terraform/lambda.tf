@@ -142,6 +142,7 @@ resource "aws_iam_policy" "order_processor_policy" {
         Resource = [
           aws_dynamodb_table.api_token_cache.arn,
           aws_dynamodb_table.menu_table.arn,
+          "${aws_dynamodb_table.menu_table.arn}/index/UberEatsID-index",
           aws_dynamodb_table.orders_table.arn
         ]
       },

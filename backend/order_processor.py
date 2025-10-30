@@ -158,7 +158,7 @@ def handler(event, context):
     1. Get auth token (from cache or Uber)
     2. Accept the order immediately
     3. Fetch full order details
-    4. Apply business logic (filter back-of-house items, including modifiers)
+    4. Apply business logic (filter items and ALL modifiers)
     5. Push to frontend via AppSync if applicable
     """
     print(f"Received event: {json.dumps(event)}")
@@ -217,12 +217,12 @@ def handler(event, context):
                             processed_item = {
                                 'Title': menu_item.get('name_mandarin', menu_item.get('ItemName', item.get('title'))),
                                 'InternalSKU': menu_item.get('ItemID'),
-                                'Quantity': item.get('quantity', 1), # Fixed JSON path
-                                'SpecialInstructions': item.get('special_instructions', ''), # Fixed JSON path
-                                'Modifiers': []
+                                'Quantity': item.get('quantity', 1),
+                                'SpecialInstructions': item.get('special_instructions', ''),
+                                'Modifiers': [] # This will hold ALL modifiers
                             }
 
-                            # --- NEW: Process Modifiers ---
+                            # --- Process ALL Modifiers ---
                             if item.get('selected_modifier_groups'):
                                 for group in item.get('selected_modifier_groups'):
                                     for modifier in group.get('selected_modifiers', []):
@@ -236,11 +236,11 @@ def handler(event, context):
                                         if modifier_response['Items']:
                                             modifier_item_details = modifier_response['Items'][0]
                                             
+                                            # Add this modifier to the list
                                             processed_item['Modifiers'].append({
                                                 'Title': modifier_item_details.get('name_mandarin', modifier_item_details.get('ItemName', modifier.get('title'))),
                                                 'InternalSKU': modifier_item_details.get('ItemID'),
-                                                'Quantity': modifier.get('quantity', 1),
-                                                'Price': modifier_item_details.get('PriceModifier', 0)
+                                                'Quantity': modifier.get('quantity', 1)
                                             })
                                         else:
                                             print(f"Warning: Modifier item {modifier.get('id')} not found in menu_table.")
@@ -257,7 +257,7 @@ def handler(event, context):
                 filtered_order = {
                     'OrderID': order_details.get('id'),
                     'DisplayID': order_details.get('display_id'),
-                    'State': order_details.get('current_state'), # Use 'current_state' from payload
+                    'State': order_details.get('current_state'), 
                     'Items': back_of_house_items
                 }
                 
