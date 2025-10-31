@@ -42,13 +42,37 @@ export function DashboardPage() {
       endpoint: import.meta.env.VITE_APPSYNC_GRAPHQL_API_URL
     });
 
-    // Create the client inside useEffect to ensure Amplify is configured
-    const client = generateClient();
-    console.log("🔵 [SUBSCRIPTION] GraphQL client created");
+    // Check if user is authenticated
+    const checkAuth = async () => {
+      try {
+        const { getCurrentUser } = await import('aws-amplify/auth');
+        const user = await getCurrentUser();
+        console.log("🔵 [SUBSCRIPTION] Authenticated user:", user.username);
+        console.log("🔵 [SUBSCRIPTION] User ID:", user.userId);
+      } catch (error) {
+        console.error("🔴 [SUBSCRIPTION] ❌ NOT AUTHENTICATED!", error);
+        console.error("🔴 [SUBSCRIPTION] You must be logged in to subscribe!");
+        return false;
+      }
+      return true;
+    };
 
-    const subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
-      query: onNewOrderSubscription
-    }).subscribe({
+    const setupSubscription = async () => {
+      const isAuth = await checkAuth();
+      if (!isAuth) {
+        console.error("🔴 [SUBSCRIPTION] Aborting subscription setup - not authenticated");
+        return;
+      }
+
+      // Create the client inside useEffect to ensure Amplify is configured
+      const client = generateClient();
+      console.log("🔵 [SUBSCRIPTION] GraphQL client created");
+
+      console.log("🔵 [SUBSCRIPTION] Subscription query:", onNewOrderSubscription);
+      
+      const subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
+        query: onNewOrderSubscription
+      }).subscribe({
       next: ({ data }) => {
         console.log("🟢 [SUBSCRIPTION] ✅ NEW ORDER RECEIVED!");
         console.log("🟢 [SUBSCRIPTION] Raw data:", JSON.stringify(data, null, 2));
@@ -106,7 +130,10 @@ export function DashboardPage() {
       console.log("🔴 [SUBSCRIPTION] Tearing down AppSync subscription.");
       subscription.unsubscribe();
     };
-  }, []);
+  };
+
+  setupSubscription();
+}, []);
 
 
   const handleStartPreparing = (id: string) => {
