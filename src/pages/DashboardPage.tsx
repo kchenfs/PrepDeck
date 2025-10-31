@@ -36,23 +36,30 @@ export function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    console.log("Setting up AppSync subscription...");
+    console.log("🔵 [SUBSCRIPTION] Starting AppSync subscription setup...");
+    console.log("🔵 [SUBSCRIPTION] Auth config:", {
+      userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID?.slice(0, 10) + '...',
+      endpoint: import.meta.env.VITE_APPSYNC_GRAPHQL_API_URL
+    });
 
     // Create the client inside useEffect to ensure Amplify is configured
     const client = generateClient();
+    console.log("🔵 [SUBSCRIPTION] GraphQL client created");
 
     const subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
       query: onNewOrderSubscription
     }).subscribe({
       next: ({ data }) => {
+        console.log("🟢 [SUBSCRIPTION] ✅ NEW ORDER RECEIVED!");
+        console.log("🟢 [SUBSCRIPTION] Raw data:", JSON.stringify(data, null, 2));
+        
         try {
-            console.log("Received new order from AppSync:", data.onNewOrder);
-            
             const orderData = data.onNewOrder;
+            console.log("🟢 [SUBSCRIPTION] Order data:", orderData);
             
             // Parse the Items JSON string
             const items = JSON.parse(orderData.Items);
-            console.log("Parsed items:", items);
+            console.log("🟢 [SUBSCRIPTION] Parsed items:", items);
             
             const newOrder: Order = {
                 id: orderData.OrderID,
@@ -73,17 +80,30 @@ export function DashboardPage() {
                 specialInstructions: orderData.SpecialInstructions
             };
 
-            console.log("Processed order:", newOrder);
-            setOrders((prevOrders) => [...prevOrders, newOrder]);
+            console.log("🟢 [SUBSCRIPTION] Processed order:", newOrder);
+            setOrders((prevOrders) => {
+              console.log("🟢 [SUBSCRIPTION] Previous orders count:", prevOrders.length);
+              console.log("🟢 [SUBSCRIPTION] Adding new order to state");
+              return [...prevOrders, newOrder];
+            });
         } catch (error) {
-            console.error("Error processing subscription message:", error);
+            console.error("🔴 [SUBSCRIPTION] ❌ Error processing subscription message:", error);
+            console.error("🔴 [SUBSCRIPTION] Error details:", JSON.stringify(error, null, 2));
         }
       },
-      error: (error) => console.error("Subscription error:", error)
+      error: (error) => {
+        console.error("🔴 [SUBSCRIPTION] ❌ Subscription error occurred!");
+        console.error("🔴 [SUBSCRIPTION] Error:", error);
+        console.error("🔴 [SUBSCRIPTION] Error details:", JSON.stringify(error, null, 2));
+      }
     });
 
+    console.log("✅ [SUBSCRIPTION] Subscription established successfully!");
+    console.log("✅ [SUBSCRIPTION] 👂 Now listening for new orders...");
+    console.log("✅ [SUBSCRIPTION] Waiting for onNewOrder events from AppSync");
+
     return () => {
-      console.log("Tearing down AppSync subscription.");
+      console.log("🔴 [SUBSCRIPTION] Tearing down AppSync subscription.");
       subscription.unsubscribe();
     };
   }, []);
