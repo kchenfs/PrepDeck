@@ -25,7 +25,7 @@ resource "aws_appsync_graphql_api" "orders_api" {
   }
 
   # THE SCHEMA WITH IAM AUTH DIRECTIVE
-  schema = <<EOF
+    schema = <<EOF
 type Order {
     OrderID: ID!
     DisplayID: String
@@ -39,13 +39,15 @@ type Query {
 }
 
 type Mutation {
-    # Add @aws_iam directive to allow IAM authentication for this mutation
-    newOrder(order: AWSJSON): Order @aws_iam
+    # Allow BOTH IAM (for Lambda) and Cognito (for frontend if needed)
+    newOrder(order: AWSJSON): Order @aws_iam @aws_cognito_user_pools
 }
 
 type Subscription {
+    # Subscriptions inherit auth from the mutation that triggers them
     onNewOrder: Order
         @aws_subscribe(mutations: ["newOrder"])
+        @aws_cognito_user_pools
 }
 
 schema {
