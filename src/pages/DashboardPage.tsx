@@ -35,7 +35,7 @@ type NewOrderSubscription = {
 export function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
 
-  useEffect(() => {
+ useEffect(() => {
     console.log("🔵 [SUBSCRIPTION] Starting AppSync subscription setup...");
     console.log("🔵 [SUBSCRIPTION] Auth config:", {
       userPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID?.slice(0, 10) + '...',
@@ -72,10 +72,14 @@ export function DashboardPage() {
 
       console.log("🔵 [SUBSCRIPTION] Subscription query:", onNewOrderSubscription);
       
-      subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
-        query: onNewOrderSubscription
-      }).subscribe({
+      try {
+        subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
+          query: onNewOrderSubscription
+        }).subscribe({
       next: ({ data }) => {
+        console.log("🟢 [SUBSCRIPTION] =====================================");
+        console.log("🟢 [SUBSCRIPTION] 🎉 SUBSCRIPTION EVENT TRIGGERED!");
+        console.log("🟢 [SUBSCRIPTION] =====================================");
         console.log("🟢 [SUBSCRIPTION] ✅ NEW ORDER RECEIVED!");
         console.log("🟢 [SUBSCRIPTION] Raw data:", JSON.stringify(data, null, 2));
         
