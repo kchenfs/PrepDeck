@@ -42,6 +42,8 @@ export function DashboardPage() {
       endpoint: import.meta.env.VITE_APPSYNC_GRAPHQL_API_URL
     });
 
+    let subscription: any = null;
+
     // Check if user is authenticated
     const checkAuth = async () => {
       try {
@@ -70,7 +72,7 @@ export function DashboardPage() {
 
       console.log("🔵 [SUBSCRIPTION] Subscription query:", onNewOrderSubscription);
       
-      const subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
+      subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
         query: onNewOrderSubscription
       }).subscribe({
       next: ({ data }) => {
@@ -126,14 +128,20 @@ export function DashboardPage() {
     console.log("✅ [SUBSCRIPTION] 👂 Now listening for new orders...");
     console.log("✅ [SUBSCRIPTION] Waiting for onNewOrder events from AppSync");
 
-    return () => {
-      console.log("🔴 [SUBSCRIPTION] Tearing down AppSync subscription.");
-      subscription.unsubscribe();
     };
-  };
 
-  setupSubscription();
-}, []);
+    setupSubscription();
+
+    return () => {
+      console.log("🔴 [SUBSCRIPTION] Cleaning up subscription...");
+      if (subscription) {
+        console.log("🔴 [SUBSCRIPTION] Unsubscribing from AppSync");
+        subscription.unsubscribe();
+      } else {
+        console.log("🟡 [SUBSCRIPTION] No active subscription to clean up");
+      }
+    };
+  }, []);
 
 
   const handleStartPreparing = (id: string) => {
