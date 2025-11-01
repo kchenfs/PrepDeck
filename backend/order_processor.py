@@ -121,8 +121,71 @@ def push_order_to_appsync(order_data):
     Returns the response data for logging.
     """
     print(f"=== APPSYNC PUSH START ===")
+    print(f"Pushing order to AppSync: {json.dumps(order_data)}")
+    
+    mutation = """
+        mutation NewOrder($order: OrderInput!) {
+            newOrder(order: $order) {
+                OrderID
+                DisplayID
+                State
+                Items
+                SpecialInstructions
+            }
+        }
+    """
+    
+    # Convert Items to JSON string since it's AWSJSON type
+    order_input = {
+        "OrderID": order_data["OrderID"],
+        "DisplayID": order_data["DisplayID"],
+        "State": order_data["State"],
+        "Items": json.dumps(order_data["Items"]),
+        "SpecialInstructions": order_data["SpecialInstructions"]
+    }
+    
+    payload = {
+        "query": mutation,
+        "variables": {
+            "order": order_input
+        }
+    }
+
+    request = AWSRequest(
+        method="POST",
+        url=APPSYNC_API_URL,
+        data=json.dumps(payload),
+        headers={'Content-Type': 'application/json'}
+    )
+    SigV4Auth(credentials, "appsync", AWS_REGION).add_auth(request)
+
+    response = requests.post(APPSYNC_API_URL, headers=dict(request.headers), data=request.data)
+    
+    print(f"AppSync Response Status: {response.status_code}")
+    
+    response.raise_for_status()
+    response_data = response.json()
+    
+    # Check if there were any errors
+    if 'errors' in response_data:
+        print(f"⚠️  AppSync returned errors: {json.dumps(response_data['errors'])}")
+    
+    # Check if data was successfully sent
+    if 'data' in response_data and response_data['data'] and response_data['data'].get('newOrder'):
+        print(f"✅ Successfully pushed order {order_data['OrderID']} to AppSync!")
+    else:
+        print(f"⚠️  AppSync mutation returned None")
+    
+    print(f"=== APPSYNC PUSH END ===")
+    
+    return response_datadef push_order_to_appsync(order_data):
+    """
+    Signs and sends a GraphQL mutation to the AppSync API.
+    Returns the response data for logging.
+    """
+    print(f"=== APPSYNC PUSH START ===")
     print(f"Pushing filtered order to AppSync:")
-    print(json.dumps(order_data))
+    print(json.dumps(order_data, indent=2))
     
     mutation = """
         mutation NewOrder($order: OrderInput!) {
@@ -144,8 +207,6 @@ def push_order_to_appsync(order_data):
         "Items": json.dumps(order_data["Items"]),  # Convert to JSON string
         "SpecialInstructions": order_data["SpecialInstructions"]
     }
-
-    print(f"conversion: {order_input}")
     
     payload = {
         "query": mutation,
@@ -153,8 +214,6 @@ def push_order_to_appsync(order_data):
             "order": order_input
         }
     }
-
-    print("attempting to print", payload)
 
     print(f"GraphQL Payload being sent:")
     print(json.dumps(payload, indent=2))
@@ -178,8 +237,6 @@ def push_order_to_appsync(order_data):
     response.raise_for_status()
     
     response_data = response.json()
-
-    print (f"AppSync Response Data: {response_data}")
     
     # Check if there were any errors
     if 'errors' in response_data:

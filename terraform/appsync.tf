@@ -26,7 +26,7 @@ resource "aws_appsync_graphql_api" "orders_api" {
 
   # THE SCHEMA WITH IAM AUTH DIRECTIVE
     schema = <<EOF
-type Order {
+type Order @aws_iam @aws_cognito_user_pools {
     OrderID: ID!
     DisplayID: String
     State: String
