@@ -34,13 +34,21 @@ type Order {
     SpecialInstructions: String
 }
 
+input OrderInput {
+    OrderID: ID!
+    DisplayID: String
+    State: String
+    Items: AWSJSON
+    SpecialInstructions: String
+}
+
 type Query {
     get_status: String
 }
 
 type Mutation {
     # Allow BOTH IAM (for Lambda) and Cognito (for frontend if needed)
-    newOrder(order: AWSJSON): Order @aws_iam @aws_cognito_user_pools
+    newOrder(order: OrderInput): Order @aws_iam @aws_cognito_user_pools
 }
 
 type Subscription {
@@ -73,14 +81,13 @@ resource "aws_appsync_datasource" "none_datasource" {
   type   = "NONE"
 }
 
-# Resolver for the Mutation
+# Resolver for the Mutation - FIXED VERSION
 resource "aws_appsync_resolver" "new_order_resolver" {
   api_id      = aws_appsync_graphql_api.orders_api.id
   type        = "Mutation"
   field       = "newOrder"
   data_source = aws_appsync_datasource.none_datasource.name
 
-  # For NONE data source, we need to return the proper structure
   request_template  = <<EOF
 {
   "version": "2018-05-29",
@@ -88,11 +95,9 @@ resource "aws_appsync_resolver" "new_order_resolver" {
 }
 EOF
 
-  # Parse the JSON string argument and return it as the Order object
-  # This both sends to subscribers AND returns to Lambda
+  # FIXED: Simply return the argument directly since it's already JSON
   response_template = <<EOF
-#set($order = $util.parseJson($context.arguments.order))
-$util.toJson($order)
+$context.arguments.order
 EOF
 }
 
