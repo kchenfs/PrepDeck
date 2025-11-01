@@ -114,7 +114,6 @@ def accept_uber_eats_order(order_id, auth_token, ready_for_pickup_time=None, ext
         print(f"Generic error accepting order {order_id}: {e}")
         return False
 
-
 def push_order_to_appsync(order_data):
     """
     Signs and sends a GraphQL mutation to the AppSync API.
@@ -178,80 +177,8 @@ def push_order_to_appsync(order_data):
     
     print(f"=== APPSYNC PUSH END ===")
     
-    return response_datadef push_order_to_appsync(order_data):
-    """
-    Signs and sends a GraphQL mutation to the AppSync API.
-    Returns the response data for logging.
-    """
-    print(f"=== APPSYNC PUSH START ===")
-    print(f"Pushing filtered order to AppSync:")
-    print(json.dumps(order_data, indent=2))
-    
-    mutation = """
-        mutation NewOrder($order: OrderInput!) {
-            newOrder(order: $order) {
-                OrderID
-                DisplayID
-                State
-                Items
-                SpecialInstructions
-            }
-        }
-    """
-    
-    # FIXED: Convert Items to JSON string since it's AWSJSON type
-    order_input = {
-        "OrderID": order_data["OrderID"],
-        "DisplayID": order_data["DisplayID"],
-        "State": order_data["State"],
-        "Items": json.dumps(order_data["Items"]),  # Convert to JSON string
-        "SpecialInstructions": order_data["SpecialInstructions"]
-    }
-    
-    payload = {
-        "query": mutation,
-        "variables": {
-            "order": order_input
-        }
-    }
-
-    print(f"GraphQL Payload being sent:")
-    print(json.dumps(payload, indent=2))
-
-    request = AWSRequest(
-        method="POST",
-        url=APPSYNC_API_URL,
-        data=json.dumps(payload),
-        headers={'Content-Type': 'application/json'}
-    )
-    SigV4Auth(credentials, "appsync", AWS_REGION).add_auth(request)
-
-    print(f"Signed request headers: {dict(request.headers)}")
-
-    response = requests.post(APPSYNC_API_URL, headers=dict(request.headers), data=request.data)
-    
-    print(f"AppSync Response Status: {response.status_code}")
-    print(f"AppSync Response Body:")
-    print(json.dumps(response.json(), indent=2))
-    
-    response.raise_for_status()
-    
-    response_data = response.json()
-    
-    # Check if there were any errors
-    if 'errors' in response_data:
-        print(f"⚠️  AppSync returned errors: {response_data['errors']}")
-    
-    # Check if data was successfully sent
-    if 'data' in response_data and response_data['data'] and response_data['data'].get('newOrder'):
-        print(f"✅ Successfully pushed order to AppSync!")
-        print(f"Returned Order Data: {json.dumps(response_data['data']['newOrder'], indent=2)}")
-    else:
-        print(f"⚠️  AppSync mutation returned None - check resolver configuration")
-    
-    print(f"=== APPSYNC PUSH END ===")
-    
     return response_data
+
 
 def handler(event, context):
     """
