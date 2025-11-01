@@ -136,11 +136,19 @@ def push_order_to_appsync(order_data):
         }
     """
     
-    # FIXED: Send order_data as object, not JSON string
+    # FIXED: Convert Items to JSON string since it's AWSJSON type
+    order_input = {
+        "OrderID": order_data["OrderID"],
+        "DisplayID": order_data["DisplayID"],
+        "State": order_data["State"],
+        "Items": json.dumps(order_data["Items"]),  # Convert to JSON string
+        "SpecialInstructions": order_data["SpecialInstructions"]
+    }
+    
     payload = {
         "query": mutation,
         "variables": {
-            "order": order_data  # Changed from json.dumps(order_data)
+            "order": order_input
         }
     }
 
@@ -172,7 +180,7 @@ def push_order_to_appsync(order_data):
         print(f"⚠️  AppSync returned errors: {response_data['errors']}")
     
     # Check if data was successfully sent
-    if 'data' in response_data and response_data['data'].get('newOrder'):
+    if 'data' in response_data and response_data['data'] and response_data['data'].get('newOrder'):
         print(f"✅ Successfully pushed order to AppSync!")
         print(f"Returned Order Data: {json.dumps(response_data['data']['newOrder'], indent=2)}")
     else:
@@ -181,7 +189,6 @@ def push_order_to_appsync(order_data):
     print(f"=== APPSYNC PUSH END ===")
     
     return response_data
-
 
 def handler(event, context):
     """
