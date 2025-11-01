@@ -95,9 +95,9 @@ resource "aws_appsync_resolver" "new_order_resolver" {
 }
 EOF
 
-  # FIXED: Simply return the argument directly since it's already JSON
+  # FIXED: Return the order input directly as an Order type
   response_template = <<EOF
-$context.arguments.order
+$util.toJson($context.arguments.order)
 EOF
 }
 
