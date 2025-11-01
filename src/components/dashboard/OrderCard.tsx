@@ -39,11 +39,29 @@ export function OrderCard({ order, onStartPreparing, onDone }: OrderCardProps) {
             </div>
           </div>
         </div>
-        <ul className="space-y-1 mb-4 border-t border-gray-500 pt-3">
+       <ul className="space-y-2 mb-4 border-t border-gray-500 pt-3">
           {order.items.map((item, index) => (
-            <li key={index} className="flex items-center text-gray-300 py-1">
-              <span className="font-bold text-lg mr-3">{item.quantity}x</span>
-              <span>{item.name}</span>
+            <li key={index} className="text-gray-300">
+              {/* Main Item */}
+              <div className="flex items-center">
+                <span className="font-bold text-lg mr-3">{item.quantity}x</span>
+                <span className="text-white">{item.name}</span>
+              </div>
+              
+              {/* Modifiers List */}
+              {item.modifiers && item.modifiers.length > 0 && (
+                <ul className="pl-9 mt-1 space-y-0.5">
+                  {item.modifiers.map((mod, modIndex) => (
+                    <li key={modIndex} className="text-sm text-gray-400 flex items-center">
+                      <span className="mr-2">&bull;</span>
+                      {mod.quantity > 1 && (
+                        <span className="font-medium mr-1.5">{mod.quantity}x</span>
+                      )}
+                      <span>{mod.name}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>
