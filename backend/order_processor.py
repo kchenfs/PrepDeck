@@ -125,7 +125,7 @@ def push_order_to_appsync(order_data):
     print(json.dumps(order_data, indent=2))
     
     mutation = """
-        mutation NewOrder($order: AWSJSON!) {
+        mutation NewOrder($order: OrderInput!) {
             newOrder(order: $order) {
                 OrderID
                 DisplayID
@@ -136,10 +136,11 @@ def push_order_to_appsync(order_data):
         }
     """
     
+    # FIXED: Send order_data as object, not JSON string
     payload = {
         "query": mutation,
         "variables": {
-            "order": json.dumps(order_data)
+            "order": order_data  # Changed from json.dumps(order_data)
         }
     }
 
