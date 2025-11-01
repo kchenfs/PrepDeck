@@ -122,7 +122,7 @@ def push_order_to_appsync(order_data):
     """
     print(f"=== APPSYNC PUSH START ===")
     print(f"Pushing filtered order to AppSync:")
-    print(json.dumps(order_data, indent=2))
+    print(json.dumps(order_data))
     
     mutation = """
         mutation NewOrder($order: OrderInput!) {
@@ -144,6 +144,8 @@ def push_order_to_appsync(order_data):
         "Items": json.dumps(order_data["Items"]),  # Convert to JSON string
         "SpecialInstructions": order_data["SpecialInstructions"]
     }
+
+    print(f"conversion: {order_input}")
     
     payload = {
         "query": mutation,
@@ -151,6 +153,8 @@ def push_order_to_appsync(order_data):
             "order": order_input
         }
     }
+
+    print("attempting to print", payload)
 
     print(f"GraphQL Payload being sent:")
     print(json.dumps(payload, indent=2))
@@ -174,6 +178,8 @@ def push_order_to_appsync(order_data):
     response.raise_for_status()
     
     response_data = response.json()
+
+    print (f"AppSync Response Data: {response_data}")
     
     # Check if there were any errors
     if 'errors' in response_data:
