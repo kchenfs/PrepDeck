@@ -76,63 +76,68 @@ export function DashboardPage() {
         subscription = client.graphql<GraphQLSubscription<NewOrderSubscription>>({
           query: onNewOrderSubscription
         }).subscribe({
-      next: ({ data }) => {
-        console.log("🟢 [SUBSCRIPTION] =====================================");
-        console.log("🟢 [SUBSCRIPTION] 🎉 SUBSCRIPTION EVENT TRIGGERED!");
-        console.log("🟢 [SUBSCRIPTION] =====================================");
-        console.log("🟢 [SUBSCRIPTION] ✅ NEW ORDER RECEIVED!");
-        console.log("🟢 [SUBSCRIPTION] Raw data:", JSON.stringify(data, null, 2));
-        
-        try {
-            const orderData = data.onNewOrder;
-            console.log("🟢 [SUBSCRIPTION] Order data:", orderData);
+          next: ({ data }) => {
+            console.log("🟢 [SUBSCRIPTION] =====================================");
+            console.log("🟢 [SUBSCRIPTION] 🎉 SUBSCRIPTION EVENT TRIGGERED!");
+            console.log("🟢 [SUBSCRIPTION] =====================================");
+            console.log("🟢 [SUBSCRIPTION] ✅ NEW ORDER RECEIVED!");
+            console.log("🟢 [SUBSCRIPTION] Raw data:", JSON.stringify(data, null, 2));
             
-            // Parse the Items JSON string
-            const items = JSON.parse(orderData.Items);
-            console.log("🟢 [SUBSCRIPTION] Parsed items:", items);
-            
-            const newOrder: Order = {
-                id: orderData.OrderID,
-                displayId: orderData.DisplayID,
-                service: 'UberEats',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                items: items.map((item: any) => ({
-                    name: item.Title,
-                    quantity: item.Quantity,
-                    // You can also include modifiers if your Order type supports it
-                    modifiers: item.Modifiers?.map((mod: any) => ({
-                        name: mod.Title,
-                        quantity: mod.Quantity
-                    }))
-                })),
-                state: 'queue',
-                isUrgent: false,
-                specialInstructions: orderData.SpecialInstructions
-            };
+            try {
+                const orderData = data.onNewOrder;
+                console.log("🟢 [SUBSCRIPTION] Order data:", orderData);
+                
+                // Parse the Items JSON string
+                const items = JSON.parse(orderData.Items);
+                console.log("🟢 [SUBSCRIPTION] Parsed items:", items);
+                
+                const newOrder: Order = {
+                    id: orderData.OrderID,
+                    displayId: orderData.DisplayID,
+                    service: 'UberEats',
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    items: items.map((item: any) => ({
+                        name: item.Title,
+                        quantity: item.Quantity,
+                        // You can also include modifiers if your Order type supports it
+                        modifiers: item.Modifiers?.map((mod: any) => ({
+                            name: mod.Title,
+                            quantity: mod.Quantity
+                        }))
+                    })),
+                    state: 'queue',
+                    isUrgent: false,
+                    specialInstructions: orderData.SpecialInstructions
+                };
 
-            console.log("🟢 [SUBSCRIPTION] Processed order:", newOrder);
-            setOrders((prevOrders) => {
-              console.log("🟢 [SUBSCRIPTION] Previous orders count:", prevOrders.length);
-              console.log("🟢 [SUBSCRIPTION] Adding new order to state");
-              return [...prevOrders, newOrder];
-            });
-        } catch (error) {
-            console.error("🔴 [SUBSCRIPTION] ❌ Error processing subscription message:", error);
+                console.log("🟢 [SUBSCRIPTION] Processed order:", newOrder);
+                setOrders((prevOrders) => {
+                    console.log("🟢 [SUBSCRIPTION] Previous orders count:", prevOrders.length);
+                    console.log("🟢 [SUBSCRIPTION] Adding new order to state");
+                    return [...prevOrders, newOrder];
+                });
+            } catch (error) {
+                console.error("🔴 [SUBSCRIPTION] ❌ Error processing subscription message:", error);
+                console.error("🔴 [SUBSCRIPTION] Error details:", JSON.stringify(error, null, 2));
+            }
+          },
+          error: (error) => {
+            console.error("🔴 [SUBSCRIPTION] ❌ Subscription error occurred!");
+            console.error("🔴 [SUBSCRIPTION] Error:", error);
             console.error("🔴 [SUBSCRIPTION] Error details:", JSON.stringify(error, null, 2));
-        }
-      },
-      error: (error) => {
-        console.error("🔴 [SUBSCRIPTION] ❌ Subscription error occurred!");
+          }
+        });
+
+        console.log("✅ [SUBSCRIPTION] Subscription established successfully!");
+        console.log("✅ [SUBSCRIPTION] 👂 Now listening for new orders...");
+        console.log("✅ [SUBSCRIPTION] Waiting for onNewOrder events from AppSync");
+
+      } catch (error) { // <-- ‼️ THIS IS THE FIX ‼️
+        console.error("🔴 [SUBSCRIPTION] ❌ FAILED TO ESTABLISH subscription!");
         console.error("🔴 [SUBSCRIPTION] Error:", error);
         console.error("🔴 [SUBSCRIPTION] Error details:", JSON.stringify(error, null, 2));
       }
-    });
-
-    console.log("✅ [SUBSCRIPTION] Subscription established successfully!");
-    console.log("✅ [SUBSCRIPTION] 👂 Now listening for new orders...");
-    console.log("✅ [SUBSCRIPTION] Waiting for onNewOrder events from AppSync");
-
-    };
+    }; // <-- This brace closes setupSubscription
 
     setupSubscription();
 
@@ -145,7 +150,7 @@ export function DashboardPage() {
         console.log("🟡 [SUBSCRIPTION] No active subscription to clean up");
       }
     };
-  }, []);
+  }, []); // <-- This brace closes useEffect
 
 
   const handleStartPreparing = (id: string) => {
